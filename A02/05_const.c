@@ -95,7 +95,7 @@ static int decode_oct(char *src, size_t src_size, struct cnst *cn)
                 if ((c < '0') || (c > '7'))
                         return 0;
                 delta = bs * (tulong)(c - '0');
-                if (res < (TULONG_MAX-delta))
+                if (res <= (TULONG_MAX-delta))
                         res += delta;
                 else
                         return 0;

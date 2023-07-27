@@ -29,7 +29,7 @@ void print_val(struct cnst *cn)
         }
 }
 
-#define BUFLEN 48
+#define BUFLEN 512
 struct tup
 {
         char num[BUFLEN];
@@ -90,6 +90,9 @@ int test_const(void)
                 {"0177777l",    TRUE, LONG_CONST},
                 {"0177777ul",   TRUE, ULONG_CONST},
                 {"0177777lu",   TRUE, ULONG_CONST},
+                {"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000177777lu",   TRUE, ULONG_CONST},
+                {"017777777777",TRUE, LONG_CONST},
+                {"037777777777",TRUE, ULONG_CONST},
         };
         int i;
         for (i = 0; i < sizeof(todec)/sizeof(struct tup); i++) {
