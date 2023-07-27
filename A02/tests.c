@@ -28,7 +28,7 @@ void print_val(struct cnst *cn)
 int test_const(void)
 {
         struct cnst cn;
-        char *todec="0177777";
+        char *todec="0177777ul";
         size_t todec_len=strlen(todec);
         int res=scan_iconst(todec, todec_len, &cn);
         if (res) {

@@ -1,12 +1,11 @@
+#include <assert.h>
 #include "types.h"
 #include "lims.h"
 #include "05_const.h"
 
-#define TULONG_BIT sizeof(tulong)/sizeof(tchar)*TCHAR_BIT
-
 enum base { NOINT=0, DEC, OCT, HEX };
 
-void set_itype(tulong val, enum base bs, struct cnst *cn)
+static void set_itype(tulong val, enum base bs, struct cnst *cn)
 {
         cn->type.type = I_CONST;
         if (val < TINT_MAX) {
@@ -24,11 +23,46 @@ void set_itype(tulong val, enum base bs, struct cnst *cn)
         }
 }
 
-int decode_oct(char *src, size_t src_size, struct cnst *cn)
+enum suff { NOSUF, USUF, LSUF, ULSUF};
+
+#define UC(ch) (ch+'A'-'a')
+#define LC(ch) (ch+'a'-'A')
+#define ISA(x,lc) ((src[sz-x] == lc) || (src[sz-x] == UC(lc)))
+static enum suff det_suff(char *src, size_t sz)
+{
+        if (sz < 2)
+                return NOSUF;
+        if (sz > 2)
+                if ((ISA(2, 'l') && ISA(1,'u')) || (ISA(2, 'u') && ISA(1,'l')))
+                        return ULSUF;
+        assert(sz >= 2);
+        if (ISA(1,'l'))
+                return LSUF;
+        if (ISA(1,'u'))
+                return USUF;
+        return NOSUF;
+}
+
+static size_t trunk_size(size_t sz, enum suff sf)
+{
+        switch (sf) {
+                case ULSUF: sz -= 2; break;
+                case USUF: case LSUF: sz --; break;
+                case NOSUF: break;
+        }
+        return sz;
+}
+
+#define BPO 3 /* bits per an octal digit */
+#define TULONG_BIT sizeof(tulong)/sizeof(tchar)*TCHAR_BIT
+static int decode_oct(char *src, size_t src_size, struct cnst *cn)
 {
         char c = 0;
+        enum suff sf;
         tulong bs=1, res=0, delta;
-        if (src_size >= TULONG_BIT)
+        sf = det_suff(src, src_size);
+        src_size = trunk_size(src_size, sf);
+        if (src_size*BPO >= TULONG_BIT)
                 return 0;
         while (c=src[--src_size], src_size>=1) {
                 if ((c < '0') || (c > '7'))
@@ -38,7 +72,7 @@ int decode_oct(char *src, size_t src_size, struct cnst *cn)
                         res += delta;
                 else
                         return 0;
-                bs <<= 3;
+                bs <<= BPO;
         }
         set_itype(res, OCT, cn);
         return 1;
@@ -49,18 +83,12 @@ static enum base det_base(char *src, size_t src_size)
         if (src_size == 0)
                 return NOINT;
         if (src_size > 2)
-                if (src[0] == '0')
-                        if ((src[1] == 'x') || (src[1] == 'X'))
-                                return HEX;
-                        else
-                                return OCT;
-                else
-                        return DEC;
-        else
-                if (src[0] == '0')
-                        return OCT;
-                else
-                        return DEC;
+                if ((src[0] == '0') && ((src[1] == 'x') || (src[1] == 'X')))
+                        return HEX;
+        assert(src_size >= 2);
+        if (src[0] == '0')
+                return OCT;
+        return DEC;
 }
 
 int scan_iconst(char *src, size_t src_size, struct cnst *cn)
