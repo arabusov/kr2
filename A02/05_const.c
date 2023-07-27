@@ -88,17 +88,30 @@ static int decode_oct(char *src, size_t src_size, struct cnst *cn)
 {
         char c = 0;
         enum suff sf;
+        int bpi = 0, digit = 0;
         tulong bs=1, res=0, delta;
         sf = det_suff(src, src_size);
         src_size = trunk_size(src_size, sf);
         while (c=src[--src_size], src_size>=1) {
                 if ((c < '0') || (c > '7'))
                         return 0;
+                digit = c - '0';
+                if (TULONG_BIT-bpi == 2)
+                        if (digit > 3)
+                                return 0;
+                if (TULONG_BIT-bpi == 1)
+                        if (digit > 1)
+                                return 0;
+                if ((TULONG_BIT <= bpi) && (digit != 0))
+                        return 0;
+                if ((TULONG_BIT <= bpi) && (digit == 0))
+                        continue;
                 delta = bs * (tulong)(c - '0');
                 if (res <= (TULONG_MAX-delta))
                         res += delta;
                 else
                         return 0;
+                bpi += BPO;
                 bs <<= BPO;
         }
         set_itype(res, OCT, sf, cn);
@@ -122,8 +135,7 @@ int scan_iconst(char *src, size_t src_size, struct cnst *cn)
 {
         switch(det_base(src, src_size)) {
                 case OCT:
-                        if(decode_oct(src, src_size, cn))
-                                return 1;
+                        return decode_oct(src, src_size, cn);
                 case DEC: case HEX: case NOINT: default:
                         return 0;
                         break;

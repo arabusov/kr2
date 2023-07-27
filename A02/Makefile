@@ -1,6 +1,7 @@
 CC=gcc
-CFLAGS=-ansi -pedantic -Wall
+CFLAGS=-ansi -pedantic -Wall -g -ggdb
 LD=gcc
+LDFLAGS=-g -ggdb
 
 SRC=$(shell ls *.c)
 HRD=$(shell ls *.h)
