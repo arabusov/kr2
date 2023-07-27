@@ -9,16 +9,17 @@
 
 struct tup
 {
-        char num[BUFLEN];
-        int     is_int_const;
-        enum iconst_type ct;
-        long val;
+        char                    num[BUFLEN];
+        int                     is_int_const;
+        int                     base;
+        enum iconst_type        ct;
+        long                    val;
 };
 
-void conf_tup(struct tup *s)
+void conf_tup(struct tup *s, int base)
 {
         char *dummy;
-        s->val = strtol(s->num, &dummy, 8);
+        s->val = strtol(s->num, &dummy, base);
 }
 
 int assert_io(unsigned long i, unsigned long o)
@@ -48,27 +49,45 @@ int test_const(void)
 {
         struct cnst cn;
         struct tup todec[] = {
+                {"017777",      TRUE, 8,        INT_CONST},
+                {"0x7bcd",      TRUE, 16,       INT_CONST},
+                {"0x100000000", FALSE},
+                {"0xfffffffffffffffffffffffffffffffffu", FALSE},
+                {"0xffffffff",  TRUE, 16,       ULONG_CONST},
+                {"0x12fb",      TRUE, 16,       INT_CONST},
+                {"0x7fff",      TRUE, 16,       INT_CONST},
+                {"0x8000",      TRUE, 16,       UINT_CONST},
+                {"0xabcd",      TRUE, 16,       UINT_CONST},
+                {"0x12fbu",     TRUE, 16,       UINT_CONST},
+                {"0xabcdef",    TRUE, 16,       LONG_CONST},
+                {"0x12fbl",     TRUE, 16,       LONG_CONST},
+                {"0x12fblu",    TRUE, 16,       ULONG_CONST},
+                {"0x12fbul",    TRUE, 16,       ULONG_CONST},
+                {"0x12fbUL",    TRUE, 16,       ULONG_CONST},
+                {"0x12FbUL",    TRUE, 16,       ULONG_CONST},
+                {"0x12FbUl",    TRUE, 16,       ULONG_CONST},
+                {"0x12F00blU",  TRUE, 16,       ULONG_CONST},
+                {"0x12F00b",    TRUE, 16,       LONG_CONST},
                 {"076543212345",FALSE},
                 {"066543212345",FALSE},
                 {"056543212345",FALSE},
                 {"040000000000",FALSE},
-                {"037777777777",TRUE, ULONG_CONST},
-                {"036543212345",TRUE, ULONG_CONST},
-                {"012345",      TRUE, INT_CONST},
-                {"017777",      TRUE, INT_CONST},
-                {"017777u",     TRUE, UINT_CONST},
-                {"017777l",     TRUE, LONG_CONST},
-                {"017777ul",    TRUE, ULONG_CONST},
-                {"017777lu",    TRUE, ULONG_CONST},
-                {"0177777",     TRUE, UINT_CONST},
-                {"0177777l",    TRUE, LONG_CONST},
-                {"0177777ul",   TRUE, ULONG_CONST},
-                {"0177777lu",   TRUE, ULONG_CONST},
+                {"037777777777",TRUE, 8,        ULONG_CONST},
+                {"036543212345",TRUE, 8,        ULONG_CONST},
+                {"012345",      TRUE, 8,        INT_CONST},
+                {"017777u",     TRUE, 8,        UINT_CONST},
+                {"017777l",     TRUE, 8,        LONG_CONST},
+                {"017777ul",    TRUE, 8,        ULONG_CONST},
+                {"017777lu",    TRUE, 8,        ULONG_CONST},
+                {"0177777",     TRUE, 8,        UINT_CONST},
+                {"0177777l",    TRUE, 8,        LONG_CONST},
+                {"0177777ul",   TRUE, 8,        ULONG_CONST},
+                {"0177777lu",   TRUE, 8,        ULONG_CONST},
                 {"000000000000000000000000000000000000000000000000000000000000\
 000000000000000000000000000000000000000000000000000000000000000000000000000017\
-7777lu",                        TRUE, ULONG_CONST},
-                {"017777777777",TRUE, LONG_CONST},
-                {"037777777777",TRUE, ULONG_CONST},
+7777lu",                        TRUE, 8,        ULONG_CONST},
+                {"017777777777",TRUE, 8,        LONG_CONST},
+                {"037777777777",TRUE, 8,        ULONG_CONST},
                 {"0777777777777",FALSE}
         };
         size_t n_tests = sizeof(todec)/sizeof(struct tup), n_succ=0;
@@ -77,7 +96,7 @@ int test_const(void)
                 int a1, a2, a3 = FALSE;
                 size_t todec_len=strlen(todec[i].num);
                 int res=scan_iconst(todec[i].num, todec_len, &cn);
-                conf_tup(&todec[i]);
+                conf_tup(&todec[i], todec[i].base);
                 printf("%d/%lu", i+1, n_tests);
                 a1 = assert_io(todec[i].is_int_const, res);
                 if (!a1) {

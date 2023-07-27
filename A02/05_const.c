@@ -76,44 +76,84 @@ static size_t trunk_size(size_t sz, enum suff sf)
 {
         switch (sf) {
                 case ULSUF: sz -= 2; break;
-                case USUF: case LSUF: sz --; break;
+                case USUF: case LSUF: sz--; break;
                 case NOSUF: break;
         }
         return sz;
 }
 
-#define BPO 3 /* bits per an octal digit */
 #define TULONG_BIT sizeof(tulong)/sizeof(tchar)*TCHAR_BIT
-static int decode_oct(char *src, size_t src_size, struct cnst *cn)
+
+int ovflow_16(int digit, int bpi)
+{
+        if (TULONG_BIT-bpi == 3)
+                if (digit > 7)
+                        return 1;
+        if (TULONG_BIT-bpi == 2)
+                if (digit > 3)
+                        return 1;
+        if (TULONG_BIT-bpi == 1)
+                if (digit > 1)
+                        return 1;
+        return 0;
+}
+
+int is_digit_8_16(char c, int bpd)
+{
+        if (bpd == 3)
+                if ((c >= '0') && (c <= '7'))
+                        return 1;
+        if (bpd == 4)
+                if (
+                                ((c >= '0') && (c <= '9')) ||
+                                ((c >= 'a') && (c <= 'f')) ||
+                                ((c >= 'A') && (c <= 'F')))
+                        return 1;
+        return 0;
+}
+
+int digit_8_16(char c, int bpd)
+{
+        if (bpd == 3)
+                return c - '0';
+        if (bpd == 4) {
+                if ((c >= '0') && (c <= '9'))
+                        return c - '0';
+                else if ((c >= 'a') && (c <= 'f'))
+                        return c - 'a' + 10;
+                else if ((c >= 'A') && (c <= 'F'))
+                        return c - 'A' + 10;
+        }
+        return 0;
+}
+
+static int decode_8_16(char *src, int src_size, struct cnst *cn, int bpd)
 {
         char c = 0;
         enum suff sf;
         int bpi = 0, digit = 0;
         tulong bs=1, res=0, delta;
         sf = det_suff(src, src_size);
-        src_size = trunk_size(src_size, sf);
-        while (c=src[--src_size], src_size>=1) {
-                if ((c < '0') || (c > '7'))
+        src_size = trunk_size(src_size, sf) - 1;
+        do {
+                c=src[src_size--];
+                if (!is_digit_8_16(c, bpd))
                         return 0;
-                digit = c - '0';
-                if (TULONG_BIT-bpi == 2)
-                        if (digit > 3)
-                                return 0;
-                if (TULONG_BIT-bpi == 1)
-                        if (digit > 1)
-                                return 0;
+                digit = digit_8_16(c, bpd);
+                if (ovflow_16(digit, bpi))
+                        return 0;
                 if ((TULONG_BIT <= bpi) && (digit != 0))
                         return 0;
                 if ((TULONG_BIT <= bpi) && (digit == 0))
                         continue;
-                delta = bs * (tulong)(c - '0');
+                delta = bs * digit;
                 if (res <= (TULONG_MAX-delta))
                         res += delta;
                 else
                         return 0;
-                bpi += BPO;
-                bs <<= BPO;
-        }
+                bpi += bpd;
+                bs <<= bpd;
+        } while (src_size>=0);
         set_itype(res, OCT, sf, cn);
         return 1;
 }
@@ -135,10 +175,11 @@ int scan_iconst(char *src, size_t src_size, struct cnst *cn)
 {
         switch(det_base(src, src_size)) {
                 case OCT:
-                        return decode_oct(src, src_size, cn);
-                case DEC: case HEX: case NOINT: default:
+                        return decode_8_16(src+1, src_size-1, cn, 3);
+                case HEX:
+                        return decode_8_16(src+2, src_size-2, cn, 4);
+                case DEC: case NOINT: default:
                         return 0;
-                        break;
         }
         return 0;
 }
