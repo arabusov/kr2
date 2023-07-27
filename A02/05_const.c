@@ -4,10 +4,10 @@
 #include "05_const.h"
 
 enum base { NOINT=0, DEC, OCT, HEX };
+enum suff { NOSUF, USUF, LSUF, ULSUF};
 
-static void set_itype(tulong val, enum base bs, struct cnst *cn)
+static void set_itype_nosuf(tulong val, enum base bs, struct cnst *cn)
 {
-        cn->type.type = I_CONST;
         if (val < TINT_MAX) {
                 cn->type.int_type = INT_CONST;
                 cn->val.int_val.int_val = (tint)val;
@@ -23,10 +23,28 @@ static void set_itype(tulong val, enum base bs, struct cnst *cn)
         }
 }
 
-enum suff { NOSUF, USUF, LSUF, ULSUF};
 
-#define UC(ch) (ch+'A'-'a')
-#define LC(ch) (ch+'a'-'A')
+static void set_itype_suf(tulong val, enum suff sf, struct cnst *cn)
+{
+        assert((sf == USUF) || (sf == LSUF));
+}
+
+static void set_itype(tulong val, enum base bs, enum suff sf, struct cnst *cn)
+{
+        cn->type.type = I_CONST;
+        switch(sf) {
+                case NOSUF:
+                        set_itype_nosuf(val, bs, cn); break;
+                case USUF: case LSUF:
+                        set_itype_suf(val, sf, cn); break;
+                case ULSUF:
+                        cn->type.int_type = ULONG_CONST;
+                        cn->val.int_val.ulong_val = val;
+        }
+}
+
+#define UC(ch) (ch+('A'-'a'))
+#define LC(ch) (ch+('a'-'A'))
 #define ISA(x,lc) ((src[sz-x] == lc) || (src[sz-x] == UC(lc)))
 static enum suff det_suff(char *src, size_t sz)
 {
@@ -74,7 +92,7 @@ static int decode_oct(char *src, size_t src_size, struct cnst *cn)
                         return 0;
                 bs <<= BPO;
         }
-        set_itype(res, OCT, cn);
+        set_itype(res, OCT, sf, cn);
         return 1;
 }
 

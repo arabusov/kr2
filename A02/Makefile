@@ -8,10 +8,13 @@ OBJ=$(patsubst %.c, %.o, $(SRC))
 
 EXE=test
 
-all: $(EXE)
+all: $(EXE) $(OBJ) $(HDR) Makefile
 
 $(EXE): $(OBJ) $(HDR) Makefile
 	$(LD) $(LDFLAGS) -o $(EXE) $(OBJ)
+%.o: %.c $(HDR)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 
 clean:
 	rm -f $(OBJ)

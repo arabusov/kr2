@@ -1,8 +1,6 @@
 #ifndef __LIMS_H__
 #define __LIMS_H__
 
-#include "types.h"
-
 #define         TCHAR_BIT       8
 #define         TCHAR_MIN       -128
 #define         TCHAR_MAX       127
