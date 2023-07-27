@@ -5,31 +5,8 @@
 
 #define TRUE 1
 #define FALSE 0
-
-void print_val(struct cnst *cn)
-{
-        switch(cn->type.type) {
-        case I_CONST:
-                switch(cn->type.int_type) {
-                case INT_CONST:
-                        printf("val %d\n", cn->val.int_val.int_val); break;
-                case UINT_CONST:
-                        printf("val %d\n", cn->val.int_val.uint_val); break;
-                case LONG_CONST:
-                        printf("val %d\n", cn->val.int_val.long_val); break;
-                case ULONG_CONST:
-                        printf("val %d\n", cn->val.int_val.ulong_val); break;
-                } break;
-        case CH_CONST:
-                printf("val %c\n", cn->val.char_val); break;
-        case STR_CONST:
-                printf("val %s\n", cn->val.str_val); break;
-        case ENUM_CONST:
-                printf("val %d\n", cn->val.enum_val); break;
-        }
-}
-
 #define BUFLEN 512
+
 struct tup
 {
         char num[BUFLEN];
@@ -87,7 +64,9 @@ int test_const(void)
                 {"0177777l",    TRUE, LONG_CONST},
                 {"0177777ul",   TRUE, ULONG_CONST},
                 {"0177777lu",   TRUE, ULONG_CONST},
-                {"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000177777lu",   TRUE, ULONG_CONST},
+                {"000000000000000000000000000000000000000000000000000000000000\
+000000000000000000000000000000000000000000000000000000000000000000000000000017\
+7777lu",                        TRUE, ULONG_CONST},
                 {"017777777777",TRUE, LONG_CONST},
                 {"037777777777",TRUE, ULONG_CONST},
                 {"0777777777777",FALSE}
