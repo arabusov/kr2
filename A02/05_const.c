@@ -91,8 +91,6 @@ static int decode_oct(char *src, size_t src_size, struct cnst *cn)
         tulong bs=1, res=0, delta;
         sf = det_suff(src, src_size);
         src_size = trunk_size(src_size, sf);
-        if (src_size*BPO >= TULONG_BIT)
-                return 0;
         while (c=src[--src_size], src_size>=1) {
                 if ((c < '0') || (c > '7'))
                         return 0;
