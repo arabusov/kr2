@@ -8,13 +8,13 @@ enum suff { NOSUF, USUF, LSUF, ULSUF};
 
 static void set_itype_nosuf(tulong val, enum base bs, struct cnst *cn)
 {
-        if (val < TINT_MAX) {
+        if (val <= TINT_MAX) {
                 cn->type.int_type = INT_CONST;
                 cn->val.int_val.int_val = (tint)val;
-        } else if (((bs == OCT) || (bs == HEX)) && val < TUINT_MAX) {
+        } else if (((bs == OCT) || (bs == HEX)) && val <= TUINT_MAX) {
                 cn->type.int_type = UINT_CONST;
                 cn->val.int_val.uint_val = (tuint)val;
-        } else if (val < TLONG_MAX) {
+        } else if (val <= TLONG_MAX) {
                 cn->type.int_type = LONG_CONST;
                 cn->val.int_val.long_val = (tlong)val;
         } else {
@@ -23,16 +23,27 @@ static void set_itype_nosuf(tulong val, enum base bs, struct cnst *cn)
         }
 }
 
-
 static void set_itype_suf(tulong val, enum suff sf, struct cnst *cn)
 {
         assert((sf == USUF) || (sf == LSUF));
+        if ((sf == USUF) && (val <= TUINT_MAX)) {
+                cn->type.int_type = UINT_CONST;
+                cn->val.int_val.uint_val = (tuint)val;
+                return;
+        }
+        if ((sf == LSUF) && (val <= TLONG_MAX)) {
+                cn->type.int_type = LONG_CONST;
+                cn->val.int_val.long_val = (tlong)val;
+                return;
+        }
+        cn->type.int_type = ULONG_CONST;
+        cn->val.int_val.ulong_val = val;
 }
 
 static void set_itype(tulong val, enum base bs, enum suff sf, struct cnst *cn)
 {
         cn->type.type = I_CONST;
-        switch(sf) {
+        switch (sf) {
                 case NOSUF:
                         set_itype_nosuf(val, bs, cn); break;
                 case USUF: case LSUF:
@@ -113,9 +124,8 @@ int scan_iconst(char *src, size_t src_size, struct cnst *cn)
 {
         switch(det_base(src, src_size)) {
                 case OCT:
-                        if(decode_oct(src, src_size, cn)) {
+                        if(decode_oct(src, src_size, cn))
                                 return 1;
-                        }
                 case DEC: case HEX: case NOINT: default:
                         return 0;
                         break;

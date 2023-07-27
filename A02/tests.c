@@ -25,19 +25,34 @@ void print_val(struct cnst *cn)
         }
 }
 
+#define BUFLEN 48
 int test_const(void)
 {
         struct cnst cn;
-        char *todec="0177777ul";
-        size_t todec_len=strlen(todec);
-        int res=scan_iconst(todec, todec_len, &cn);
-        if (res) {
-                printf("%s passed\n", todec);
-                printf("Type %d: ", cn.type.type);
-                printf("iType %d: ", cn.type.int_type);
-                print_val(&cn);
-        } else {
-                printf("%s failed\n", todec);
+        char todec[][BUFLEN] = {
+                "017777",
+                "017777u",
+                "017777l",
+                "017777ul",
+                "017777lu",
+                "0177777",
+                "0177777u",
+                "0177777l",
+                "0177777lu",
+                "0177777ul"
+        };
+        int i;
+        for (i = 0; i < sizeof(todec)/BUFLEN; i++) {
+                size_t todec_len=strlen(todec[i]);
+                int res=scan_iconst(todec[i], todec_len, &cn);
+                if (res) {
+                        printf("%s passed\n", todec[i]);
+                        printf("Type %d: ", cn.type.type);
+                        printf("iType %d: ", cn.type.int_type);
+                        print_val(&cn);
+                } else {
+                        printf("%s failed\n", todec[i]);
+                }
         }
         return 0;
 }
