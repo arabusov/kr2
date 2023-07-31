@@ -22,7 +22,7 @@ void conf_tup(struct tup *s, int base)
         s->val = strtol(s->num, &dummy, base);
 }
 
-int assert_io(unsigned long i, unsigned long o)
+int asrt_io(unsigned long i, unsigned long o)
 {
         int res = (i == o);
         if (!res)
@@ -30,17 +30,17 @@ int assert_io(unsigned long i, unsigned long o)
         return res;
 }
 
-int assert_val(enum iconst_type t, long i1, union int_const *i2)
+int asrt_v(enum iconst_type t, long i1, union int_const *i2)
 {
         switch (t) {
                 case INT_CONST:
-                        return assert_io(i1, i2->int_val);
+                        return asrt_io(i1, i2->int_val);
                 case UINT_CONST:
-                        return assert_io(i1, i2->uint_val);
+                        return asrt_io(i1, i2->uint_val);
                 case LONG_CONST:
-                        return assert_io(i1, i2->long_val);
+                        return asrt_io(i1, i2->long_val);
                 case ULONG_CONST:
-                        return assert_io(i1, i2->ulong_val);
+                        return asrt_io(i1, i2->ulong_val);
         }
         return FALSE;
 }
@@ -48,7 +48,7 @@ int assert_val(enum iconst_type t, long i1, union int_const *i2)
 int test_const(void)
 {
         struct cnst cn;
-        struct tup todec[] = {
+        struct tup tp[] = {
                 {"400000094967296",  FALSE, 10},
                 {"017777",      TRUE, 8,        INT_CONST},
                 {"0x7bcd",      TRUE, 16,       INT_CONST},
@@ -107,40 +107,44 @@ int test_const(void)
                 {"037777777777",TRUE, 8,        ULONG_CONST},
                 {"0777777777777",FALSE}
         };
-        size_t n_tests = sizeof(todec)/sizeof(struct tup), n_succ=0;
+        size_t n_t = sizeof(tp)/sizeof(struct tup), n_succ=0;
         int i;
-        for (i = 0; i < n_tests; i++) {
+        for (i = 0; i < n_t; i++) {
                 int a1, a2, a3 = FALSE;
-                size_t todec_len=strlen(todec[i].num);
-                int res=scan_iconst(todec[i].num, todec_len, &cn);
-                conf_tup(&todec[i], todec[i].base);
-                printf("%d/%lu", i+1, n_tests);
-                a1 = assert_io(todec[i].is_int_const, res);
+                char *s = tp[i].num;
+                size_t tp_len=strlen(s);
+                int res=scan_iconst(s, tp_len, &cn);
+                conf_tup(&tp[i], tp[i].base);
+                a1 = asrt_io(tp[i].is_int_const, res);
                 if (!a1) {
-                        printf ("(a1 test for %s)\n", todec[i].num);
+                        printf("[%d/%lu] (1: %s)\n", i+1, n_t, s);
                         continue;
                 }
                 if (res) {
-                        a2 = assert_io(todec[i].ct, cn.type.int_type);
+                        a2 = asrt_io(tp[i].ct, cn.type.int_type);
                         if (!a2) {
-                                printf("(a2 test for %s)\n", todec[i].num);
+                                printf("[%d/%lu] (2: %s)\n", i+1, n_t, s);
                                 continue;
                         }
-                        a3 = assert_val(todec[i].ct, todec[i].val, &cn.val.int_val);
+                        a3 = asrt_v(tp[i].ct, tp[i].val, &cn.val.int_val);
                         if (!a3) {
-                                printf("(a3 test for %s)\n", todec[i].num);
+                                printf("[%d/%lu] (3: %s)\n", i+1, n_t, s);
                                 continue;
                         }
                 }
                 n_succ++;
-                printf("\tpassed\n");
         }
-        printf("Passed: %lu/%lu\n", n_succ, n_tests);
-        return 0;
+        if (n_succ == n_t) {
+                return TRUE;
+        }
+        printf("Integer constant: failed (%lu/%lu)\n", n_t-n_succ, n_t);
+        return n_succ == n_t ? TRUE : FALSE;
 }
 
 int main(void)
 {
-        test_const();
+        int n_tests = 1, n_succ = 0;
+        n_succ = test_const() ? 1 : 0;
+        printf("Total test stat: [%d/%d]\n", n_succ, n_tests);
         return 0;
 }
