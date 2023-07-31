@@ -127,34 +127,85 @@ int digit_8_16(char c, int bpd)
         return 0;
 }
 
-static int decode_8_16(char *src, int src_size, struct cnst *cn, int bpd)
+enum ddr { FAIL, CONTINUE, LAST };
+static enum ddr
+dp2d(char c, int bpd, int *bpi, tulong *bs, tulong *res)
+{
+        int digit;
+        tulong delta;
+        if (!is_digit_8_16(c, bpd))
+                return FAIL;
+        digit = digit_8_16(c, bpd);
+        if (ovflow_16(digit, *bpi))
+                return FAIL;
+        if ((TULONG_BIT <= *bpi) && (digit != 0))
+                return FAIL;
+        if ((TULONG_BIT <= *bpi) && (digit == 0))
+                return CONTINUE;
+        delta = *bs * digit;
+        if (*res <= (TULONG_MAX-delta))
+                *res += delta;
+        else
+                return FAIL;
+        *bpi += bpd;
+        *bs <<= bpd;
+        return CONTINUE;
+}
+
+static enum ddr ddd(char c, tulong *bs, tulong *res)
+{
+        int dig;
+        tulong delta;
+        if (c < '0' || c > '9')
+                return FAIL;
+        dig = c - '0';
+        if (TULONG_MAX/(*bs) < dig)
+                return FAIL;
+        delta = *bs * dig;
+        if (*res <= (TULONG_MAX - delta))
+                *res += delta;
+        else
+                return FAIL;
+        if (TULONG_MAX/(*bs) < 10)
+                return LAST;
+        *bs *= 10;
+        return CONTINUE;
+}
+
+static int bpd(enum base cbase)
+{
+        switch (cbase) {
+                case OCT: return 3;
+                case HEX: return 4;
+                default: return 0;
+        }
+}
+
+static int decode(char *src, int src_size, struct cnst *cn, enum base cbase)
 {
         char c = 0;
         enum suff sf;
-        int bpi = 0, digit = 0;
-        tulong bs=1, res=0, delta;
+        int bpi = 0;
+        tulong bs=1, res=0;
         sf = det_suff(src, src_size);
         src_size = trunk_size(src_size, sf) - 1;
         do {
+                enum ddr dd;
                 c=src[src_size--];
-                if (!is_digit_8_16(c, bpd))
-                        return 0;
-                digit = digit_8_16(c, bpd);
-                if (ovflow_16(digit, bpi))
-                        return 0;
-                if ((TULONG_BIT <= bpi) && (digit != 0))
-                        return 0;
-                if ((TULONG_BIT <= bpi) && (digit == 0))
-                        continue;
-                delta = bs * digit;
-                if (res <= (TULONG_MAX-delta))
-                        res += delta;
-                else
-                        return 0;
-                bpi += bpd;
-                bs <<= bpd;
+                if (cbase == OCT || cbase == HEX)
+                        dd = dp2d(c, bpd(cbase), &bpi, &bs, &res);
+                else if (cbase == DEC)
+                        dd = ddd(c, &bs, &res);
+                else return 0;
+                switch (dd) {
+                        case FAIL: return 0;
+                        case CONTINUE: continue;
+                        case LAST: if (src_size > 0)
+                                           return 0;
+                                   else continue;
+                }
         } while (src_size>=0);
-        set_itype(res, OCT, sf, cn);
+        set_itype(res, cbase, sf, cn);
         return 1;
 }
 
@@ -173,12 +224,15 @@ static enum base det_base(char *src, size_t src_size)
 
 int scan_iconst(char *src, size_t src_size, struct cnst *cn)
 {
-        switch(det_base(src, src_size)) {
+        enum base cbase = det_base(src, src_size);
+        switch(cbase) {
                 case OCT:
-                        return decode_8_16(src+1, src_size-1, cn, 3);
+                        return decode(src+1, src_size-1, cn, cbase);
                 case HEX:
-                        return decode_8_16(src+2, src_size-2, cn, 4);
-                case DEC: case NOINT: default:
+                        return decode(src+2, src_size-2, cn, cbase);
+                case DEC: 
+                        return decode(src, src_size, cn, cbase);
+                case NOINT:
                         return 0;
         }
         return 0;
