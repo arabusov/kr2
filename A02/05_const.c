@@ -237,3 +237,14 @@ int scan_iconst(char *src, size_t src_size, struct cnst *cn)
         }
         return 0;
 }
+
+int scan_cconst(char *src, size_t sz, struct cnst *cn)
+{
+        if (sz < 2)
+                return 0;
+        if (src[0] != '\'' && src[sz-1] != '\'')
+                return 0;
+        src++;
+        sz--;
+        return 0;
+}
