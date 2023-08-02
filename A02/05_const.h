@@ -31,5 +31,6 @@ struct cnst {
 };
 
 extern int scan_iconst(char *, size_t, struct cnst *);
+extern int scan_cconst(char *, size_t, struct cnst *);
 
 #endif /* __CONST_H__ */

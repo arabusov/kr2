@@ -250,7 +250,7 @@ int scan_cconst(char *src, size_t sz, struct cnst *cn)
         if (src[0] != '\'' && src[sz-1] != '\'')
                 return 0;
         src++;
-        sz--;
+        sz -= 2;
         if (sz == 1)
                 switch (*src) {
                         case '\'': case '\\':
