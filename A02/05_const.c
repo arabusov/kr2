@@ -238,19 +238,34 @@ int scan_iconst(char *src, size_t src_size, struct cnst *cn)
         return 0;
 }
 
-static int esc(char *src, size_t sz, struct cnst *cn)
+static int symb_cconst(char c, struct cnst *cn)
 {
+        cn->type.type = CH_CONST;
+        switch (c) {
+                case 'n': cn->val.char_val = (tchar)'\n'; return 1;
+                case 't': cn->val.char_val = (tchar)'\t'; return 1;
+                case 'v': cn->val.char_val = (tchar)'\v'; return 1;
+                case 'b': cn->val.char_val = (tchar)'\b'; return 1;
+                case 'r': cn->val.char_val = (tchar)'\r'; return 1;
+                case 'f': cn->val.char_val = (tchar)'\f'; return 1;
+                case 'a': cn->val.char_val = (tchar)'\a'; return 1;
+                case '\\': cn->val.char_val = (tchar)'\\'; return 1;
+                case '\?': cn->val.char_val = (tchar)'\?'; return 1;
+                case '\'': cn->val.char_val = (tchar)'\''; return 1;
+                case '\"': cn->val.char_val = (tchar)'\"'; return 1;
+        }
         return 0;
 }
 
-int scan_cconst(char *src, size_t sz, struct cnst *cn)
+static int esc(char *src, size_t sz, struct cnst *cn)
 {
-        if (sz < 3)
-                return 0;
-        if (src[0] != '\'' && src[sz-1] != '\'')
-                return 0;
-        src++;
-        sz -= 2;
+        if (sz == 1)
+                return symb_cconst(src[0], cn);
+        return 0;
+}
+
+static int scan_cconst_nq(char *src, size_t sz, struct cnst *cn)
+{
         if (sz == 1)
                 switch (*src) {
                         case '\'': case '\\':
@@ -265,4 +280,15 @@ int scan_cconst(char *src, size_t sz, struct cnst *cn)
         src++;
         sz--;
         return esc(src, sz, cn);
+}
+
+extern int scan_cconst(char *src, size_t sz, struct cnst *cn)
+{
+        if (sz < 3)
+                return 0;
+        if (src[0] != '\'' && src[sz-1] != '\'')
+                return 0;
+        src++;
+        sz -= 2;
+        return scan_cconst_nq(src, sz, cn);
 }

@@ -24,7 +24,18 @@ int single_test(struct test_tup *tup)
 }
 
 struct test_tup tests[] = {
-        {"\'a\'",        1,      {CH_CONST},       'a'}
+        {"\'a\'",        1,     {CH_CONST},     'a'},
+        {"\'?\'",        1,     {CH_CONST},     '?'},
+        {"\'ab\'",       0},
+        {"\'\\n\'",      1,     {CH_CONST},     '\n'},
+        {"\'\\v\'",      1,     {CH_CONST},     '\v'},
+        {"\'\\a\'",      1,     {CH_CONST},     '\a'},
+        {"\'\\t\'",      1,     {CH_CONST},     '\t'},
+        {"\'\\n\'",      1,     {CH_CONST},     '\n'},
+        {"\'\\?\'",      1,     {CH_CONST},     '\?'},
+        {"\'\\0\'",      1,     {CH_CONST},     '\0'},
+        {"\'\\1\'",      1,     {CH_CONST},     '\1'},
+        {"\'\\12\'",     1,     {CH_CONST},     '\12'},
 };
 
 extern int test_chrconst(void)
