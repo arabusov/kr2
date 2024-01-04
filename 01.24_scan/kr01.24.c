@@ -8,23 +8,31 @@
 #define FALSE (! TRUE)
 #define VBS FALSE
 
-enum state_t { S_COMMENT, S_DQ, S_SQ, S_ESC, S_OTHER, S_EOF };
+static enum state_t { S_COMMENT, S_DQ, S_SQ, S_ESC, S_OTHER, S_EOF};
 
-enum state_t state = S_OTHER;
+static enum state_t state = S_OTHER;
 
-int lineno = 1, col = 1;
+static int lineno = 1, col = 1;
 
-void error(char *s)
+static void
+error(char *s)
 {
         fprintf(stderr, "Error at %d[L]:%d[C] -- %s\n", lineno, col, s);
-        exit(1);
+        exit(EXIT_FAILURE);
+}
+
+#define pc(c) { \
+        int loc_ch = putchar(c); \
+        if (loc_ch == EOF) { \
+                error("stdout write failure"); \
+        } \
 }
 
 #define SSIZE 2048
-char stack[SSIZE];
-ptrdiff_t stackp;
+static char stack[SSIZE];
+static ptrdiff_t stackp;
 
-void
+static void
 push(char x)
 {
         assert(stackp>=0);
@@ -32,7 +40,7 @@ push(char x)
         stack[stackp++] = x;
 }
 
-char
+static char
 pop()
 {
         char val;
@@ -42,7 +50,8 @@ pop()
         return val;
 }
 
-int unmatched(int bra, int ket)
+static int
+unmatched(int bra, int ket)
 {
         int a = bra=='(' && ket == ')';
         int b = bra=='[' && ket == ']';
@@ -50,7 +59,7 @@ int unmatched(int bra, int ket)
         return !(a||b||c);
 }
 
-void
+static void
 prnth(int ch)
 {
         switch (ch) {
@@ -71,14 +80,15 @@ prnth(int ch)
 }
 
 
-void
+static void
 test_at_eof(void)
 {
         if (stackp != 0)
                 error("unmatched parenthesis at EOF");
 }
 
-int gch(void)
+static int
+gch(void)
 {
         int ch = getchar();
         if (ch == '\n') {
@@ -96,7 +106,7 @@ int gch(void)
         return ch;
 }
 
-void
+static void
 ignore_comment(void)
 {
         int ch;
@@ -118,7 +128,7 @@ ignore_comment(void)
         state = S_OTHER;
 }
 
-int
+static int
 is_comment_start(int *ch)
 {
         int old;
@@ -128,16 +138,16 @@ is_comment_start(int *ch)
                 *ch = gch();
                 if (*ch == -1) {
                         state = S_EOF;
-                        if (VBS) putchar(old);
+                        if (VBS) pc(old);
                         return FALSE;
                 }
                 if (*ch == '*') {
                         state = S_COMMENT;
                         return TRUE;
                 }
-                if (VBS) putchar(old);
+                if (VBS) pc(old);
         }
-        if (VBS) putchar(*ch);
+        if (VBS) pc(*ch);
         return FALSE;
 }
 
@@ -145,7 +155,7 @@ enum quote_mode { SQM, DQM };
 /*
  * Also test for multiline comments of course
  */
-int
+static int
 esc(enum quote_mode qmode)
 {
         int cntr = 0;
@@ -194,7 +204,7 @@ esc(enum quote_mode qmode)
         return ch;
 }
 
-void
+static void
 dq(void)
 {
         int ch;
@@ -209,7 +219,7 @@ dq(void)
 }
 
 
-void
+static void
 sq(void)
 {
         int ch = gch();
@@ -222,8 +232,8 @@ sq(void)
 }
 
 /* run scanner 'with some crazy test inside? */
-void
-scan()
+static void
+scan(void)
 {
         int ch;
         do {
