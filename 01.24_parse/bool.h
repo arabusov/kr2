@@ -5,4 +5,3 @@
 #define FALSE 0
 
 #endif /* __BOOL_H__ */
-
