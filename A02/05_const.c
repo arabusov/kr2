@@ -51,13 +51,13 @@ static void set_itype(tulong val, enum base bs, enum suff sf, struct cnst *cn)
 {
 	cn->type.type = I_CONST;
 	switch (sf) {
-		case NOSUF:
-			set_itype_nosuf(val, bs, cn); break;
-		case USUF: case LSUF:
-			set_itype_suf(val, sf, cn); break;
-		case ULSUF:
-			cn->type.int_type = ULONG_CONST;
-			cn->val.int_val.ulong_val = val;
+	case NOSUF:
+		set_itype_nosuf(val, bs, cn); break;
+	case USUF: case LSUF:
+		set_itype_suf(val, sf, cn); break;
+	case ULSUF:
+		cn->type.int_type = ULONG_CONST;
+		cn->val.int_val.ulong_val = val;
 	}
 }
 
@@ -82,9 +82,9 @@ static enum suff det_suff(char *src, size_t sz)
 static size_t trunk_size(size_t sz, enum suff sf)
 {
 	switch (sf) {
-		case ULSUF: sz -= 2; break;
-		case USUF: case LSUF: sz--; break;
-		case NOSUF: break;
+	case ULSUF: sz -= 2; break;
+	case USUF: case LSUF: sz--; break;
+	case NOSUF: break;
 	}
 	return sz;
 }
@@ -112,9 +112,9 @@ int is_digit_8_16(char c, int bpd)
 			return 1;
 	if (bpd == 4)
 		if (
-				((c >= '0') && (c <= '9')) ||
-				((c >= 'a') && (c <= 'f')) ||
-				((c >= 'A') && (c <= 'F')))
+		    ((c >= '0') && (c <= '9')) ||
+		    ((c >= 'a') && (c <= 'f')) ||
+		    ((c >= 'A') && (c <= 'F')))
 			return 1;
 	return 0;
 }
@@ -182,9 +182,9 @@ static enum ddr ddd(char c, tulong *bs, tulong *res)
 static int bpd(enum base cbase)
 {
 	switch (cbase) {
-		case OCT: return 3;
-		case HEX: return 4;
-		default: return 0;
+	case OCT: return 3;
+	case HEX: return 4;
+	default: return 0;
 	}
 }
 
@@ -205,15 +205,26 @@ static int decode(char *src, int src_size, struct cnst *cn, enum base cbase)
 			dd = ddd(c, &bs, &res);
 		else return 0;
 		switch (dd) {
-			case FAIL: return 0;
-			case CONTINUE: continue;
-			case LAST: if (src_size > 0)
-					   return 0;
-				   else continue;
+		case FAIL: return 0;
+		case CONTINUE: continue;
+		case LAST: if (src_size > 0)
+				   return 0;
+			   else continue;
 		}
 	} while (src_size>=0);
 	set_itype(res, cbase, sf, cn);
 	return 1;
+}
+
+static int num_cconst(char *src, size_t sz, struct cnst *cn)
+{
+	if (decode(src, sz, cn, OCT)) {
+		if (cn->type.type == I_CONST && cn->val.int_val.ulong_val < 128) {
+			cn->type.type = CH_CONST;
+			return 1;
+		}
+	}
+	return 0;
 }
 
 static enum base det_base(char *src, size_t src_size)
@@ -236,14 +247,14 @@ int scan_iconst(char *src, size_t src_size, struct cnst *cn)
 	enum base cbase;
 	cbase = det_base(src, src_size);
 	switch(cbase) {
-		case OCT:
-			return decode(src+1, src_size-1, cn, cbase);
-		case HEX:
-			return decode(src+2, src_size-2, cn, cbase);
-		case DEC: 
-			return decode(src, src_size, cn, cbase);
-		case NOINT:
-			return 0;
+	case OCT:
+		return decode(src+1, src_size-1, cn, cbase);
+	case HEX:
+		return decode(src+2, src_size-2, cn, cbase);
+	case DEC:
+		return decode(src, src_size, cn, cbase);
+	case NOINT:
+		return 0;
 	}
 	return 0;
 }
@@ -252,17 +263,21 @@ static int symb_cconst(char c, struct cnst *cn)
 {
 	cn->type.type = CH_CONST;
 	switch (c) {
-		case 'n': cn->val.char_val = (tchar)'\n'; return 1;
-		case 't': cn->val.char_val = (tchar)'\t'; return 1;
-		case 'v': cn->val.char_val = (tchar)'\v'; return 1;
-		case 'b': cn->val.char_val = (tchar)'\b'; return 1;
-		case 'r': cn->val.char_val = (tchar)'\r'; return 1;
-		case 'f': cn->val.char_val = (tchar)'\f'; return 1;
-		case 'a': cn->val.char_val = (tchar)'\a'; return 1;
-		case '\\': cn->val.char_val = (tchar)'\\'; return 1;
-		case '\?': cn->val.char_val = (tchar)'\?'; return 1;
-		case '\'': cn->val.char_val = (tchar)'\''; return 1;
-		case '\"': cn->val.char_val = (tchar)'\"'; return 1;
+	case 'n': cn->val.char_val = (tchar)'\n'; return 1;
+	case 't': cn->val.char_val = (tchar)'\t'; return 1;
+	case 'v': cn->val.char_val = (tchar)'\v'; return 1;
+	case 'b': cn->val.char_val = (tchar)'\b'; return 1;
+	case 'r': cn->val.char_val = (tchar)'\r'; return 1;
+	case 'f': cn->val.char_val = (tchar)'\f'; return 1;
+	case 'a': cn->val.char_val = (tchar)'\a'; return 1;
+	case '\\': cn->val.char_val = (tchar)'\\'; return 1;
+	case '\?': cn->val.char_val = (tchar)'\?'; return 1;
+	case '\'': cn->val.char_val = (tchar)'\''; return 1;
+	case '\"': cn->val.char_val = (tchar)'\"'; return 1;
+	}
+	if (c >= '0' && c <= '7') {
+		cn->val.char_val = (tchar)((int)c - (int)'0');
+		return 1;
 	}
 	return 0;
 }
@@ -271,19 +286,19 @@ static int esc(char *src, size_t sz, struct cnst *cn)
 {
 	if (sz == 1)
 		return symb_cconst(src[0], cn);
-	return 0;
+	return num_cconst(src, sz, cn);
 }
 
 static int scan_cconst_nq(char *src, size_t sz, struct cnst *cn)
 {
 	if (sz == 1)
 		switch (*src) {
-			case '\'': case '\\':
-				return 0;
-			default:
-				cn->type.type = CH_CONST;
-				cn->val.char_val = (tchar)*src;
-				return 1;
+		case '\'': case '\\':
+			return 0;
+		default:
+			cn->type.type = CH_CONST;
+			cn->val.char_val = (tchar)*src;
+			return 1;
 		}
 	if (src[0] != '\\')
 		return 0;

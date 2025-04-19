@@ -1,7 +1,7 @@
 CC=cc
 CFLAGS=-I.
 LD=cc
-LDFLAGS=-i
+LDFLAGS=
 .SUFFIXES: .o.c
 OBJ=05_const.o test_cconst.o test_iconst.o tests.o
 
