@@ -3,7 +3,7 @@ CFLAGS=-I.
 LD=cc
 LDFLAGS=
 .SUFFIXES: .o.c
-OBJ=05_const.o test_cconst.o test_iconst.o tests.o
+OBJ=04_keyw.o 05_const.o test_cconst.o test_iconst.o test_keyw.o tests.o
 
 EXE=run_tests
 

@@ -6,5 +6,6 @@
 
 extern int test_iconst(void);
 extern int test_chrconst(void);
+extern int test_keyw(void);
 
 #endif

@@ -12,6 +12,6 @@ enum keyw {
 	DO, IF, STATIC, WHILE
 };
 
-extern int scan_keyw(char *, size_t, enum keyw *);
+extern int scan_keyw(char *, enum keyw *);
 
 #endif /* __KEYW_H__ */

@@ -4,26 +4,27 @@
 #include "05_const.h"
 #include "tests.h"
 
-#define BUFLEN 512
-
 struct test_tup {
-	char uinp[BUFLEN];
+	char *uinp;
 	int is_chrconst;
 	struct const_type type;
 	int val;
 };
 
-int single_test(struct test_tup *tup)
+static int single_test(struct test_tup *tup)
 {
 	size_t sz = strlen(tup->uinp);
 	struct cnst cn;
 	int res = scan_cconst(tup->uinp, sz, &cn);
 	if (tup->is_chrconst == res)
 		return TRUE;
+	if (res)		/* also test the result value */
+		if ((tchar) tup->val == (tchar) cn.val.char_val)
+			return TRUE;
 	return FALSE;
 }
 
-struct test_tup tests[] = {
+static struct test_tup tests[] = {
 	{ "\'a\'", 1, { CH_CONST}, 'a' },
 	{ "\'?\'", 1, { CH_CONST}, '?' },
 	{ "\'ab\'", 0 },
