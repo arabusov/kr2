@@ -97,7 +97,7 @@ static int gch(void)
 	}
 	col++;
 	if (col > COL_LIM)
-		error("Colon limit exceeded");
+		error("Column limit exceeded");
 	return ch;
 }
 
