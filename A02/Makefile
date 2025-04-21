@@ -3,9 +3,9 @@ CFLAGS=-I.
 LD=cc
 LDFLAGS=
 .SUFFIXES: .o.c
-OBJ=keyw.o const.o test_cconst.o test_iconst.o test_keyw.o tests.o
+OBJ=keyw.o const.o utests.o
 
-EXE=run_tests
+EXE=run_utests
 
 all: $(EXE)
 

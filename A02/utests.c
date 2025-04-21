@@ -2,11 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "tests.h"
 #include "const.h"
-
-#define TRUE 1
-#define FALSE 0
+#include "keyw.h"
+#include "bool.h"
 
 #define BUFLEN 24
 struct tup {
@@ -171,4 +169,146 @@ extern int test_iconst(void)
 	}
 	printf("Integer constant: failed (%lu/%lu)\n", n_t - n_succ, n_t);
 	return n_succ == n_t ? TRUE : FALSE;
+}
+
+struct test_tup {
+	char *uinp;
+	int is_chrconst;
+	struct const_type type;
+	int val;
+};
+
+static int single_test(struct test_tup *tup)
+{
+	size_t sz = strlen(tup->uinp);
+	struct cnst cn;
+	int res = scan_cconst(tup->uinp, sz, &cn);
+	if (tup->is_chrconst == res)
+		return TRUE;
+	if (res)		/* also test the result value */
+		if ((tchar) tup->val == (tchar) cn.val.char_val)
+			return TRUE;
+	return FALSE;
+}
+
+static struct test_tup char_tests[] = {
+	{ "\'a\'", 1, { CH_CONST}, 'a' },
+	{ "\'?\'", 1, { CH_CONST}, '?' },
+	{ "\'ab\'", 0 },
+	{ "\'\\n\'", 1, { CH_CONST}, '\n' },
+	{ "\'\\v\'", 1, { CH_CONST}, '\v' },
+	{ "\'\\a\'", 1, { CH_CONST}, '\a' },
+	{ "\'\\t\'", 1, { CH_CONST}, '\t' },
+	{ "\'\\n\'", 1, { CH_CONST}, '\n' },
+	{ "\'\\?\'", 1, { CH_CONST}, '\?' },
+	{ "\'\\0\'", 1, { CH_CONST}, '\0' },
+	{ "\'\\1\'", 1, { CH_CONST}, '\1' },
+	{ "\'\\12\'", 1, { CH_CONST}, '\12' },
+};
+
+extern int test_chrconst(void)
+{
+	unsigned long n_tests = sizeof(char_tests) / sizeof(struct test_tup);
+	unsigned i, n_fails = 0;
+	for (i = 0; i < n_tests; i++) {
+		if (single_test(char_tests + i) == FALSE) {
+			printf("(%u/%lu) failed. User input is %s\n",
+			       i + 1, n_tests, (char_tests + i)->uinp);
+			n_fails++;
+		}
+	}
+	return n_fails == 0;
+}
+
+static struct ktest {
+	char *str;
+	int res;
+	enum keyw class;
+} keyw_tests[] = {
+	{ "alignas", FALSE },	/* C23 */
+	{ "alignof", FALSE },	/* C23 */
+	{ "auto", TRUE, AUTO },
+	{ "bool", FALSE },	/* C23 */
+	{ "break", TRUE, BREAK },
+	{ "case", TRUE, CASE },
+	{ "const", TRUE, CONST },
+	{ "constexpr", FALSE },	/* C23 */
+	{ "continue", TRUE, CONTINUE },
+	{ "default", TRUE, DEFAULT },
+	{ "do", TRUE, DO },
+	{ "double", TRUE, DOUBLE },
+	{ "else", TRUE, ELSE },
+	{ "enum", TRUE, ENUM },
+	{ "extern", TRUE, EXTERN },
+	{ "false", FALSE },	/* C23 */
+	{ "float", TRUE, FLOAT },
+	{ "for", TRUE, FOR },
+	{ "goto", TRUE, GOTO },
+	{ "if", TRUE, IF },
+	{ "int", TRUE, INT },
+	{ "inline", FALSE },	/* C99 */
+	{ "long", TRUE, LONG },
+	{ "nullptr", FALSE },	/* C23 */
+	{ "register", TRUE, REGISTER },
+	{ "return", TRUE, RETURN },
+	{ "restrict", FALSE },	/* C99 */
+	{ "short", TRUE, SHORT },
+	{ "signed", TRUE, SIGNED },
+	{ "sizeof", TRUE, SIZEOF },
+	{ "static", TRUE, STATIC },
+	{ "static_assert", FALSE },	/* C23 */
+	{ "struct", TRUE, STRUCT },
+	{ "switch", TRUE, SWITCH },
+	{ "thread_local", FALSE },	/* C23 */
+	{ "true", FALSE },	/* C23 */
+	{ "typedef", TRUE, TYPEDEF },
+	{ "typeof", FALSE },	/* C23 */
+	{ "typeof_unqual", FALSE },	/* C23 */
+	{ "union", TRUE, UNION },
+	{ "unsigned", TRUE, UNSIGNED },
+	{ "void", TRUE, VOID },
+	{ "volatile", TRUE, VOLATILE },
+	{ "while", TRUE, WHILE },
+	{ "_Bool", FALSE },	/* C99 */
+	{ "_Complex", FALSE },	/* C99 */
+	{ "_Imaginary", FALSE },	/* C99 */
+};
+
+static int single_kwtest(struct ktest *tup)
+{
+	enum keyw kw;
+	int res = scan_keyw(tup->str, &kw);
+	if (tup->res == res)
+		return TRUE;
+	if (res)
+		if (tup->class == kw)
+			return TRUE;
+	return FALSE;
+}
+
+extern int test_keyw(void)
+{
+	unsigned long n_tests = sizeof(keyw_tests) / sizeof(struct ktest);
+	unsigned i, n_fails = 0;
+	for (i = 0; i < n_tests; i++) {
+		if (single_kwtest(keyw_tests + i) == FALSE) {
+			printf("(%u/%lu) failed. User input is %s\n",
+			       i + 1, n_tests, (keyw_tests + i)->str);
+			n_fails++;
+		}
+	}
+	return n_fails == 0;
+}
+
+#define TEST(f) (n_tests++, (f() == TRUE) ? 1 : 0)
+
+int main(void)
+{
+	int n_tests = 0;
+	int n_succ = 0;
+	n_succ += TEST(test_iconst);
+	n_succ += TEST(test_chrconst);
+	n_succ += TEST(test_keyw);
+	printf("Total test stat: [%d/%d]\n", n_succ, n_tests);
+	return 0;
 }
