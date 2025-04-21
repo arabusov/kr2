@@ -79,6 +79,14 @@ static int gch(void)
 	return ch;
 }
 
+static void ungch(int ch)
+{
+	ungetc(ch, stdin);
+	col--;
+	if (col < 0)
+		error("Column below zero");
+}
+
 static void ignore_comment(void)
 {
 	int ch;
@@ -121,7 +129,7 @@ bool expect(const char c)
 {
 	if (c == gch())
 		return TRUE;
-	ungetc(c, stdin);
+	ungch(c);
 	return FALSE;
 }
 
@@ -132,7 +140,7 @@ bool expect_delim(int *ch, enum delim *delim)
 		*delim = *ch;
 		return TRUE;
 	}
-	ungetc(*ch, stdin);
+	ungch(*ch);
 	return FALSE;
 }
 
@@ -241,7 +249,7 @@ void skip_wsp(int *const ch)
 	do {
 		*ch = gch();
 	} while (is_whitespace(*ch));
-	ungetc(*ch, stdin);
+	ungch(*ch);
 }
 
 #define NTOKMAX 2048
@@ -253,21 +261,23 @@ extern void scan(void)
 	int ch;
 	do {
 		struct tok *tokp = &tok_table[toki];
+		skip_wsp(&ch);
 		if (is_comment_start(&ch)) {
 			ignore_comment();
 			if (ch == EOF)
 				break;
 			continue;
 		}
-		skip_wsp(&ch);
+		printf("%c: ", ch);
 		if (expect_delim(&ch, &(tokp->val.delim))) {
 			tokp->type = DELIM_TOK;
 		} else if (expect_operator(&ch, (enum op *)&(tokp->val.op))) {
 			tokp->type = OP_TOK;
 		} else {
+			printf("NULL\n");
 			continue;
 		}
-		printf("%d\n", tokp->type);
+		printf("%d %d\n", tokp->type, tokp->val);
 		if (toki < NTOKMAX)
 			toki++;
 	}
