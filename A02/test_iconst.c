@@ -3,7 +3,7 @@
 #include <string.h>
 #include <assert.h>
 #include "tests.h"
-#include "05_const.h"
+#include "const.h"
 
 #define TRUE 1
 #define FALSE 0

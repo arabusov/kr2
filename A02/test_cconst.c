@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "05_const.h"
+#include "const.h"
 #include "tests.h"
 
 struct test_tup {

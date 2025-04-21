@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "types.h"
 #include "lims.h"
-#include "05_const.h"
+#include "const.h"
 
 enum base { NOINT = 0, DEC, OCT, HEX };
 enum suff { NOSUF, USUF, LSUF, ULSUF };

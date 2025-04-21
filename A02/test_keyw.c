@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "04_keyw.h"
+#include "keyw.h"
 #include "tests.h"
 
 static struct ktest {

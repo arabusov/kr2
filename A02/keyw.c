@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <string.h>
-#include "04_keyw.h"
+#include "keyw.h"
 
 static int keyw(char *s, const char *cmp, enum keyw *res, const enum keyw kw)
 {
