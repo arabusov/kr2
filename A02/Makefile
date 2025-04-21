@@ -1,18 +1,25 @@
 CC=cc
-CFLAGS=-I.
+CFLAGS=-I. -g -ggdb -Wall -Wextra
 LD=cc
-LDFLAGS=
+LDFLAGS=-g -ggdb
 .SUFFIXES: .o.c
-OBJ=keyw.o const.o utests.o
+OBJ=ident.o table.o keyw.o const.o scan.o
+TESTO=keyw.o const.o utests.o
 
-EXE=run_utests
+TESTS=run_utests
 
-all: $(EXE)
+EXE=scan
+
+all: $(TESTS) $(EXE)
 
 $(EXE): $(OBJ) Makefile
 	$(LD) $(LDFLAGS) -o $(EXE) $(OBJ)
+$(TESTS): $(TESTO) Makefile
+	$(LD) $(LDFLAGS) -o $(TESTS) $(TESTO)
 
 clean:
 	rm -f $(OBJ)
+	rm -f $(TESTO)
 	rm -f $(EXE)
+	rm -f $(TESTS)
 	rm -f core

@@ -2,8 +2,9 @@
 #define __IDENT_H__
 
 #define IDENT_LEN 31
-struct ident {
-	char name[IDENT_LEN + 1];
-};
+
+typedef char *ident;
+
+void save_ident(const char *src);
 
 #endif /* __IDENT_H__ */

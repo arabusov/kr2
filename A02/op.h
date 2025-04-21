@@ -49,8 +49,8 @@ enum op {
 	EQ_OP,
 	NEQ_OP,
 
-};
+	ELLI_OP,		/* ellipcis: ... */
 
-bool is_operator(const char *uin, size_t, enum op *);
+};
 
 #endif /* __OP_H__ */
