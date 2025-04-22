@@ -200,7 +200,7 @@ static struct test_tup char_tests[] = {
 	{ "\'ab\'", 0, { NOT_CONST, NOT_INT_CONST}, '\0' },
 	{ "\'\\n\'", 1, { CH_CONST, NOT_INT_CONST}, '\n' },
 	{ "\'\\v\'", 1, { CH_CONST, NOT_INT_CONST}, '\v' },
-	{ "\'\\a\'", 1, { CH_CONST, NOT_INT_CONST}, '\a' },
+	{ "\'\\a\'", 1, { CH_CONST, NOT_INT_CONST}, '\007' },
 	{ "\'\\t\'", 1, { CH_CONST, NOT_INT_CONST}, '\t' },
 	{ "\'\\n\'", 1, { CH_CONST, NOT_INT_CONST}, '\n' },
 	{ "\'\\?\'", 1, { CH_CONST, NOT_INT_CONST}, '\?' },

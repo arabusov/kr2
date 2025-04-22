@@ -297,7 +297,7 @@ static int symb_cconst(char c, struct cnst *cn)
 		cn->val.char_val = (tchar) '\f';
 		return 1;
 	case 'a':
-		cn->val.char_val = (tchar) '\a';
+		cn->val.char_val = (tchar) '\007';
 		return 1;
 	case '\\':
 		cn->val.char_val = (tchar) '\\';

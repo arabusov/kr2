@@ -1,4 +1,3 @@
-CC ?= gcc
 CFLAGS=-ansi -pedantic -Wall -Wextra -Werror -Wfatal-errors
 CFLAGS+=-I.
 CFLAGS+=-g -ggdb
