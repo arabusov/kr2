@@ -9,7 +9,7 @@ enum delim {
 	LSQBR_DELIM = '[',
 	RSQBR_DELIM = ']',
 	LPAR_DELIM = '(',
-	RPAR_DELIM = ')',
+	RPAR_DELIM = ')'
 };
 
 #define IS_DELIM(X) (\

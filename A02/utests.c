@@ -5,6 +5,7 @@
 #include "const.h"
 #include "keyw.h"
 #include "bool.h"
+#include "types.h"
 
 #define BUFLEN 24
 struct tup {
@@ -16,7 +17,7 @@ struct tup {
 	tulong val;
 };
 
-static void conf_tup(struct tup *s, int base)
+static void conf_tup(struct tup *s)
 {
 	assert(sizeof(unsigned long) >= sizeof(tulong));
 	switch (s->base) {
@@ -39,7 +40,7 @@ static int asrt_io(tulong i, tulong o)
 {
 	int res = (i == o);
 	if (!res)
-		printf(" fail: %lu (in) != %lu (out) ", i, o);
+		printf(" fail: %" TARGlu " (in) != %" TARGlu " (out) ", i, o);
 	return res;
 }
 
@@ -54,77 +55,79 @@ static int asrt_v(enum iconst_type t, tulong i1, union int_const *i2)
 		return asrt_io(i1, i2->long_val);
 	case ULONG_CONST:
 		return asrt_io(i1, i2->ulong_val);
+	default:
+		return FALSE;
 	}
 	return FALSE;
 }
 
 struct tup tp[] = {
-	{ 0, FALSE, 10, INT_CONST, "400094967296" },
-	{ 017777, TRUE, 8, INT_CONST },
-	{ 0x7bcd, TRUE, 16, INT_CONST },
-	{ 1264, TRUE, 10, INT_CONST },
-	{ 1284, TRUE, 10, INT_CONST },
-	{ 32767, TRUE, 10, INT_CONST },
-	{ 0x7fff, TRUE, 10, INT_CONST, "0x7fff" },
-	{ 077777, TRUE, 10, INT_CONST, "077777" },
-	{ 32767, TRUE, 10, LONG_CONST, "32767l" },
-	{ 32767, TRUE, 10, UINT_CONST, "32767u" },
-	{ 32767, TRUE, 10, UINT_CONST, "32767U" },
-	{ 32767, TRUE, 10, ULONG_CONST, "32767ul" },
-	{ 65535, TRUE, 10, LONG_CONST },
-	{ 0xffff, TRUE, 10, UINT_CONST, "0xffff" },
-	{ 65535l, TRUE, 10, LONG_CONST, "65535l" },
-	{ 65535u, TRUE, 10, UINT_CONST, "65535u" },
-	{ 65536, TRUE, 10, LONG_CONST },
-	{ 2147483647, TRUE, 10, LONG_CONST },
-	{ 2147483647u, TRUE, 10, ULONG_CONST, "2147483647u" },
-	{ 2147483648, TRUE, 10, ULONG_CONST },
-	{ 4294967295, TRUE, 10, ULONG_CONST },
-	{ 0, FALSE, 10, INT_CONST, "4294967296" },
-	{ 0, FALSE, 10, INT_CONST, "4000094967296" },
-	{ 0, FALSE, 0, INT_CONST, "0x100000000" },
-	{ 0xffffffff, TRUE, 16, ULONG_CONST },
-	{ 0x12fb, TRUE, 16, INT_CONST },
-	{ 0x7fff, TRUE, 16, INT_CONST },
-	{ 0x8000, TRUE, 16, UINT_CONST, "0x8000" },
-	{ 0, FALSE, 0, INT_CONST, "08000" },
-	{ 0, TRUE, 8, INT_CONST, "0000" },
-	{ 0, TRUE, 10, INT_CONST, "0" },
-	{ 0x0000, TRUE, 16, INT_CONST, "0x0000" },
-	{ 01, TRUE, 8, INT_CONST, "01" },
-	{ 1, TRUE, 10, INT_CONST, "1" },
-	{ 0x0001, TRUE, 16, INT_CONST, "0x0001" },
-	{ 0xabcd, TRUE, 16, UINT_CONST, "0xabcd" },
-	{ 0x12fbu, TRUE, 16, UINT_CONST, "0x12fbu" },
-	{ 0xabcdef, TRUE, 16, LONG_CONST, "0xabcdef" },
-	{ 0x12fbl, TRUE, 16, LONG_CONST, "0x12fbl" },
-	{ 0x12fblu, TRUE, 16, ULONG_CONST, "0x12fblu" },
-	{ 0x12fbul, TRUE, 16, ULONG_CONST, "0x12fbul" },
-	{ 0x12fbUL, TRUE, 16, ULONG_CONST, "0x12fbUL" },
-	{ 0x12FbUL, TRUE, 16, ULONG_CONST, "0x12FbUL" },
-	{ 0x12FbUl, TRUE, 16, ULONG_CONST, "0x12FbUl" },
-	{ 0x12F00blU, TRUE, 16, ULONG_CONST, "0x12F00blU" },
-	{ 0x12F00b, TRUE, 16, LONG_CONST, "0x12F00b" },
-	{ 0, FALSE, 0, INT_CONST, "076543212345" },
-	{ 0, FALSE, 0, INT_CONST, "066543212345" },
-	{ 0, FALSE, 0, INT_CONST, "056543212345" },
-	{ 0, FALSE, 0, INT_CONST, "040000000000" },
-	{ 037777777777, TRUE, 8, ULONG_CONST, "037777777777" },
-	{ 017777777777, TRUE, 8, LONG_CONST, "017777777777" },
-	{ 036543212345, TRUE, 8, ULONG_CONST, "036543212345" },
-	{ 012345, TRUE, 8, INT_CONST, "012345" },
-	{ 077777, TRUE, 8, INT_CONST, "077777" },
-	{ 0177777, TRUE, 8, UINT_CONST, "0177777" },
-	{ 0177777u, TRUE, 8, UINT_CONST, "0177777u" },
-	{ 0177777l, TRUE, 8, LONG_CONST, "0177777l" },
-	{ 0177777ul, TRUE, 8, ULONG_CONST, "0177777ul" },
-	{ 0177777lu, TRUE, 8, ULONG_CONST, "0177777lu" },
-	{ 01777777, TRUE, 8, LONG_CONST, "01777777" },
-	{ 01777777l, TRUE, 8, LONG_CONST, "01777777l" },
-	{ 01777777ul, TRUE, 8, ULONG_CONST, "01777777ul" },
-	{ 01777777lu, TRUE, 8, ULONG_CONST, "01777777lu" },
-	{ 01777777lu, TRUE, 8, ULONG_CONST, "0001777777lu" },
-	{ 0, FALSE, 0, INT_CONST, "0777777777777" }
+	{ 0, FALSE, 10, INT_CONST, "400094967296", 0 },
+	{ 017777, TRUE, 8, INT_CONST, "", 0 },
+	{ 0x7bcd, TRUE, 16, INT_CONST, "", 0 },
+	{ 1264, TRUE, 10, INT_CONST, "", 0 },
+	{ 1284, TRUE, 10, INT_CONST, "", 0 },
+	{ 32767, TRUE, 10, INT_CONST, "", 0 },
+	{ 0x7fff, TRUE, 10, INT_CONST, "0x7fff", 0 },
+	{ 077777, TRUE, 10, INT_CONST, "077777", 0 },
+	{ 32767, TRUE, 10, LONG_CONST, "32767l", 0 },
+	{ 32767, TRUE, 10, UINT_CONST, "32767u", 0 },
+	{ 32767, TRUE, 10, UINT_CONST, "32767U", 0 },
+	{ 32767, TRUE, 10, ULONG_CONST, "32767ul", 0 },
+	{ 65535, TRUE, 10, LONG_CONST, "", 0 },
+	{ 0xffff, TRUE, 10, UINT_CONST, "0xffff", 0 },
+	{ 65535l, TRUE, 10, LONG_CONST, "65535l", 0 },
+	{ 65535u, TRUE, 10, UINT_CONST, "65535u", 0 },
+	{ 65536, TRUE, 10, LONG_CONST, "", 0 },
+	{ 2147483647, TRUE, 10, LONG_CONST, "", 0 },
+	{ 2147483647u, TRUE, 10, ULONG_CONST, "2147483647u", 0 },
+	{ 2147483648u, TRUE, 10, ULONG_CONST, "", 0 },
+	{ 4294967295u, TRUE, 10, ULONG_CONST, "", 0 },
+	{ 0, FALSE, 10, INT_CONST, "4294967296", 0 },
+	{ 0, FALSE, 10, INT_CONST, "4000094967296", 0 },
+	{ 0, FALSE, 0, INT_CONST, "0x100000000", 0 },
+	{ 0xffffffff, TRUE, 16, ULONG_CONST, "", 0 },
+	{ 0x12fb, TRUE, 16, INT_CONST, "", 0 },
+	{ 0x7fff, TRUE, 16, INT_CONST, "", 0 },
+	{ 0x8000, TRUE, 16, UINT_CONST, "0x8000", 0 },
+	{ 0, FALSE, 0, INT_CONST, "08000", 0 },
+	{ 0, TRUE, 8, INT_CONST, "0000", 0 },
+	{ 0, TRUE, 10, INT_CONST, "0", 0 },
+	{ 0x0000, TRUE, 16, INT_CONST, "0x0000", 0 },
+	{ 01, TRUE, 8, INT_CONST, "01", 0 },
+	{ 1, TRUE, 10, INT_CONST, "1", 0 },
+	{ 0x0001, TRUE, 16, INT_CONST, "0x0001", 0 },
+	{ 0xabcd, TRUE, 16, UINT_CONST, "0xabcd", 0 },
+	{ 0x12fbu, TRUE, 16, UINT_CONST, "0x12fbu", 0 },
+	{ 0xabcdef, TRUE, 16, LONG_CONST, "0xabcdef", 0 },
+	{ 0x12fbl, TRUE, 16, LONG_CONST, "0x12fbl", 0 },
+	{ 0x12fblu, TRUE, 16, ULONG_CONST, "0x12fblu", 0 },
+	{ 0x12fbul, TRUE, 16, ULONG_CONST, "0x12fbul", 0 },
+	{ 0x12fbUL, TRUE, 16, ULONG_CONST, "0x12fbUL", 0 },
+	{ 0x12FbUL, TRUE, 16, ULONG_CONST, "0x12FbUL", 0 },
+	{ 0x12FbUl, TRUE, 16, ULONG_CONST, "0x12FbUl", 0 },
+	{ 0x12F00blU, TRUE, 16, ULONG_CONST, "0x12F00blU", 0 },
+	{ 0x12F00b, TRUE, 16, LONG_CONST, "0x12F00b", 0 },
+	{ 0, FALSE, 0, INT_CONST, "076543212345", 0 },
+	{ 0, FALSE, 0, INT_CONST, "066543212345", 0 },
+	{ 0, FALSE, 0, INT_CONST, "056543212345", 0 },
+	{ 0, FALSE, 0, INT_CONST, "040000000000", 0 },
+	{ 037777777777, TRUE, 8, ULONG_CONST, "037777777777", 0 },
+	{ 017777777777, TRUE, 8, LONG_CONST, "017777777777", 0 },
+	{ 036543212345, TRUE, 8, ULONG_CONST, "036543212345", 0 },
+	{ 012345, TRUE, 8, INT_CONST, "012345", 0 },
+	{ 077777, TRUE, 8, INT_CONST, "077777", 0 },
+	{ 0177777, TRUE, 8, UINT_CONST, "0177777", 0 },
+	{ 0177777u, TRUE, 8, UINT_CONST, "0177777u", 0 },
+	{ 0177777l, TRUE, 8, LONG_CONST, "0177777l", 0 },
+	{ 0177777ul, TRUE, 8, ULONG_CONST, "0177777ul", 0 },
+	{ 0177777lu, TRUE, 8, ULONG_CONST, "0177777lu", 0 },
+	{ 01777777, TRUE, 8, LONG_CONST, "01777777", 0 },
+	{ 01777777l, TRUE, 8, LONG_CONST, "01777777l", 0 },
+	{ 01777777ul, TRUE, 8, ULONG_CONST, "01777777ul", 0 },
+	{ 01777777lu, TRUE, 8, ULONG_CONST, "01777777lu", 0 },
+	{ 01777777lu, TRUE, 8, ULONG_CONST, "0001777777lu", 0 },
+	{ 0, FALSE, 0, INT_CONST, "0777777777777", 0 }
 };
 
 extern int test_iconst(void)
@@ -132,7 +135,7 @@ extern int test_iconst(void)
 	struct cnst cn;
 	unsigned long n_t = sizeof(tp) / sizeof(struct tup);
 	unsigned long n_succ = 0;
-	int i;
+	unsigned i;
 	for (i = 0; i < n_t; i++) {
 		int a1, a2, a3 = FALSE;
 		int res;
@@ -140,7 +143,7 @@ extern int test_iconst(void)
 		unsigned long tp_len;
 		if (tp[i].is_int_const && tp[i].in_str[0] == '\0'
 		    && tp[i].base != 0) {
-			conf_tup(&tp[i], tp[i].base);
+			conf_tup(&tp[i]);
 		}
 		tp_len = strlen(tp[i].in_str);
 		s = tp[i].in_str;
@@ -192,18 +195,18 @@ static int single_test(struct test_tup *tup)
 }
 
 static struct test_tup char_tests[] = {
-	{ "\'a\'", 1, { CH_CONST}, 'a' },
-	{ "\'?\'", 1, { CH_CONST}, '?' },
-	{ "\'ab\'", 0 },
-	{ "\'\\n\'", 1, { CH_CONST}, '\n' },
-	{ "\'\\v\'", 1, { CH_CONST}, '\v' },
-	{ "\'\\a\'", 1, { CH_CONST}, '\a' },
-	{ "\'\\t\'", 1, { CH_CONST}, '\t' },
-	{ "\'\\n\'", 1, { CH_CONST}, '\n' },
-	{ "\'\\?\'", 1, { CH_CONST}, '\?' },
-	{ "\'\\0\'", 1, { CH_CONST}, '\0' },
-	{ "\'\\1\'", 1, { CH_CONST}, '\1' },
-	{ "\'\\12\'", 1, { CH_CONST}, '\12' },
+	{ "\'a\'", 1, { CH_CONST, NOT_INT_CONST}, 'a' },
+	{ "\'?\'", 1, { CH_CONST, NOT_INT_CONST}, '?' },
+	{ "\'ab\'", 0, { NOT_CONST, NOT_INT_CONST}, '\0' },
+	{ "\'\\n\'", 1, { CH_CONST, NOT_INT_CONST}, '\n' },
+	{ "\'\\v\'", 1, { CH_CONST, NOT_INT_CONST}, '\v' },
+	{ "\'\\a\'", 1, { CH_CONST, NOT_INT_CONST}, '\a' },
+	{ "\'\\t\'", 1, { CH_CONST, NOT_INT_CONST}, '\t' },
+	{ "\'\\n\'", 1, { CH_CONST, NOT_INT_CONST}, '\n' },
+	{ "\'\\?\'", 1, { CH_CONST, NOT_INT_CONST}, '\?' },
+	{ "\'\\0\'", 1, { CH_CONST, NOT_INT_CONST}, '\0' },
+	{ "\'\\1\'", 1, { CH_CONST, NOT_INT_CONST}, '\1' },
+	{ "\'\\12\'", 1, { CH_CONST, NOT_INT_CONST}, '\12' },
 };
 
 extern int test_chrconst(void)
@@ -225,14 +228,14 @@ static struct ktest {
 	int res;
 	enum keyw class;
 } keyw_tests[] = {
-	{ "alignas", FALSE },	/* C23 */
-	{ "alignof", FALSE },	/* C23 */
+	{ "alignas", FALSE, NOT_KEYW },	/* C23 */
+	{ "alignof", FALSE, NOT_KEYW },	/* C23 */
 	{ "auto", TRUE, AUTO },
-	{ "bool", FALSE },	/* C23 */
+	{ "bool", FALSE, NOT_KEYW },	/* C23 */
 	{ "break", TRUE, BREAK },
 	{ "case", TRUE, CASE },
 	{ "const", TRUE, CONST },
-	{ "constexpr", FALSE },	/* C23 */
+	{ "constexpr", FALSE, NOT_KEYW },	/* C23 */
 	{ "continue", TRUE, CONTINUE },
 	{ "default", TRUE, DEFAULT },
 	{ "do", TRUE, DO },
@@ -240,38 +243,38 @@ static struct ktest {
 	{ "else", TRUE, ELSE },
 	{ "enum", TRUE, ENUM },
 	{ "extern", TRUE, EXTERN },
-	{ "false", FALSE },	/* C23 */
+	{ "false", FALSE, NOT_KEYW },	/* C23 */
 	{ "float", TRUE, FLOAT },
 	{ "for", TRUE, FOR },
 	{ "goto", TRUE, GOTO },
 	{ "if", TRUE, IF },
 	{ "int", TRUE, INT },
-	{ "inline", FALSE },	/* C99 */
+	{ "inline", FALSE, NOT_KEYW },	/* C99 */
 	{ "long", TRUE, LONG },
-	{ "nullptr", FALSE },	/* C23 */
+	{ "nullptr", FALSE, NOT_KEYW },	/* C23 */
 	{ "register", TRUE, REGISTER },
 	{ "return", TRUE, RETURN },
-	{ "restrict", FALSE },	/* C99 */
+	{ "restrict", FALSE, NOT_KEYW },	/* C99 */
 	{ "short", TRUE, SHORT },
 	{ "signed", TRUE, SIGNED },
 	{ "sizeof", TRUE, SIZEOF },
 	{ "static", TRUE, STATIC },
-	{ "static_assert", FALSE },	/* C23 */
+	{ "static_assert", FALSE, NOT_KEYW },	/* C23 */
 	{ "struct", TRUE, STRUCT },
 	{ "switch", TRUE, SWITCH },
-	{ "thread_local", FALSE },	/* C23 */
-	{ "true", FALSE },	/* C23 */
+	{ "thread_local", FALSE, NOT_KEYW },	/* C23 */
+	{ "true", FALSE, NOT_KEYW },	/* C23 */
 	{ "typedef", TRUE, TYPEDEF },
-	{ "typeof", FALSE },	/* C23 */
-	{ "typeof_unqual", FALSE },	/* C23 */
+	{ "typeof", FALSE, NOT_KEYW },	/* C23 */
+	{ "typeof_unqual", FALSE, NOT_KEYW },	/* C23 */
 	{ "union", TRUE, UNION },
 	{ "unsigned", TRUE, UNSIGNED },
 	{ "void", TRUE, VOID },
 	{ "volatile", TRUE, VOLATILE },
 	{ "while", TRUE, WHILE },
-	{ "_Bool", FALSE },	/* C99 */
-	{ "_Complex", FALSE },	/* C99 */
-	{ "_Imaginary", FALSE },	/* C99 */
+	{ "_Bool", FALSE, NOT_KEYW },	/* C99 */
+	{ "_Complex", FALSE, NOT_KEYW },	/* C99 */
+	{ "_Imaginary", FALSE, NOT_KEYW },	/* C99 */
 };
 
 static int single_kwtest(struct ktest *tup)

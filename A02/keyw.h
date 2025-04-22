@@ -2,6 +2,7 @@
 #define __KEYW_H__
 
 enum keyw {
+	NOT_KEYW,
 	AUTO, DOUBLE, INT, STRUCT,
 	BREAK, ELSE, LONG, SWITCH,
 	CASE, ENUM, REGISTER, TYPEDEF,

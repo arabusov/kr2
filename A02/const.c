@@ -99,7 +99,7 @@ static size_t trunk_size(size_t sz, enum suff sf)
 	return sz;
 }
 
-#define TULONG_BIT sizeof(tulong)/sizeof(tchar)*TCHAR_BIT
+#define TULONG_BIT ((int)(sizeof(tulong)/sizeof(tchar)*TCHAR_BIT))
 
 int ovflow_16(int digit, int bpi)
 {
@@ -173,7 +173,7 @@ static enum ddr ddd(char c, tulong * bs, tulong * res)
 	if (c < '0' || c > '9')
 		return FAIL;
 	dig = c - '0';
-	if (TULONG_MAX / (*bs) < dig)
+	if (TULONG_MAX / (*bs) < (unsigned)dig)
 		return FAIL;
 	delta = *bs * dig;
 	if (*res <= (TULONG_MAX - delta))

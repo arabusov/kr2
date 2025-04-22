@@ -15,6 +15,7 @@ union tok_val {
 	struct cnst cnst;
 	enum op op;
 	enum delim delim;
+	int print;
 };
 
 struct tok {

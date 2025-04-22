@@ -7,10 +7,6 @@
 
 #define COL_LIM 511
 
-static enum scan_state { S_COMMENT, S_DQ, S_SQ, S_ESC, S_OTHER, S_EOF };
-
-static enum scan_state state = S_OTHER;
-
 static int lineno = 1, col = 1;
 
 extern void error(const char *s)
@@ -90,22 +86,18 @@ static void ungch(int ch)
 static void ignore_comment(void)
 {
 	int ch;
-	assert(state == S_COMMENT);
 	do {
 		ch = gch();
-		if (ch == '*' && state == S_COMMENT) {
+		if (ch == '*') {
 			ch = gch();
 			if (ch == -1) {
-				state = S_EOF;
 				return;
 			}
 			if (ch == '/') {
-				state = S_OTHER;
 				return;
 			}
 		}
 	} while (ch != -1);
-	state = S_OTHER;
 }
 
 static bool is_comment_start(int *ch)
@@ -114,11 +106,9 @@ static bool is_comment_start(int *ch)
 	if (*ch == '/') {
 		*ch = gch();
 		if (*ch == -1) {
-			state = S_EOF;
 			return FALSE;
 		}
 		if (*ch == '*') {
-			state = S_COMMENT;
 			return TRUE;
 		}
 	}
@@ -277,7 +267,7 @@ extern void scan(void)
 			printf("NULL\n");
 			continue;
 		}
-		printf("%d %d\n", tokp->type, tokp->val);
+		printf("%d %d\n", tokp->type, tokp->val.print);
 		if (toki < NTOKMAX)
 			toki++;
 	}

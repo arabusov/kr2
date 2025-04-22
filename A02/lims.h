@@ -9,6 +9,6 @@
 #define         TUINT_MAX       65535
 #define         TLONG_MIN       -2147483648
 #define         TLONG_MAX       2147483647
-#define         TULONG_MAX      4294967295
+#define         TULONG_MAX      0xffffffff
 
 #endif /* __LIMS_H__ */

@@ -18,10 +18,12 @@ union const_val {
 	tint enum_val;
 };
 
-enum iconst_type { INT_CONST, UINT_CONST, LONG_CONST, ULONG_CONST };
+enum iconst_type { NOT_INT_CONST, INT_CONST, UINT_CONST, LONG_CONST,
+	ULONG_CONST
+};
 
 struct const_type {
-	enum { I_CONST, CH_CONST, STR_CONST, ENUM_CONST } type;
+	enum { NOT_CONST, I_CONST, CH_CONST, STR_CONST, ENUM_CONST } type;
 	enum iconst_type int_type;
 };
 

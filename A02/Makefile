@@ -1,6 +1,8 @@
-CC=cc
-CFLAGS=-I. -g -ggdb -Wall -Wextra
-LD=cc
+CC ?= gcc
+CFLAGS=-ansi -pedantic -Wall -Wextra -Werror -Wfatal-errors
+CFLAGS+=-I.
+CFLAGS+=-g -ggdb
+LD=$(CC)
 LDFLAGS=-g -ggdb
 .SUFFIXES: .o.c
 OBJ=ident.o table.o keyw.o const.o scan.o

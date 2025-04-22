@@ -49,8 +49,7 @@ enum op {
 	EQ_OP,
 	NEQ_OP,
 
-	ELLI_OP,		/* ellipcis: ... */
-
+	ELLI_OP			/* ellipcis: ... */
 };
 
 #endif /* __OP_H__ */
