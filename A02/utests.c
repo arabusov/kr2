@@ -280,7 +280,7 @@ static struct ktest {
 static int single_kwtest(struct ktest *tup)
 {
 	enum keyw kw;
-	int res = scan_keyw(tup->str, &kw);
+	int res = scan_keyw(tup->str, strlen(tup->str), &kw);
 	if (tup->res == res)
 		return TRUE;
 	if (res)

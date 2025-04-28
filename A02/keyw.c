@@ -2,35 +2,37 @@
 #include <string.h>
 #include "keyw.h"
 
-static int keyw(char *s, const char *cmp, enum keyw *res, const enum keyw kw)
+static bool keyw(
+		char *s, size_t sz, const char *cmp,
+		enum keyw *res, const enum keyw kw)
 {
-	if (strcmp(s, cmp))
-		return 0;
+	if (memcmp(s, cmp, sz))
+		return FALSE;
 	*res = kw;
-	return 1;
+	return TRUE;
 }
 
-extern int scan_keyw(char *s, enum keyw *res)
+extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 {
 	switch (s[0]) {
 	case 'a':
-		return keyw(s, "auto", res, AUTO);
+		return keyw(s, sz, "auto", res, AUTO);
 	case 'b':
-		return keyw(s, "break", res, BREAK);
+		return keyw(s, sz, "break", res, BREAK);
 	case 'c':
 		switch (s[1]) {
 		case 'a':
-			return keyw(s, "case", res, CASE);
+			return keyw(s, sz, "case", res, CASE);
 		case 'h':
-			return keyw(s, "char", res, CHAR);
+			return keyw(s, sz, "char", res, CHAR);
 		case 'o':
 			if (s[2] != 'n')
 				return 0;
 			switch (s[3]) {
 			case 's':
-				return keyw(s, "const", res, CONST);
+				return keyw(s, sz, "const", res, CONST);
 			case 't':
-				return keyw(s, "continue", res, CONTINUE);
+				return keyw(s, sz, "continue", res, CONTINUE);
 			default:
 				return 0;
 			}
@@ -40,14 +42,14 @@ extern int scan_keyw(char *s, enum keyw *res)
 	case 'd':
 		switch (s[1]) {
 		case 'e':
-			return keyw(s, "default", res, CONST);
+			return keyw(s, sz, "default", res, CONST);
 		case 'o':
 			switch (s[2]) {
 			case '\0':
 				*res = DO;
 				return 1;
 			case 'u':
-				return keyw(s, "double", res, DOUBLE);
+				return keyw(s, sz, "double", res, DOUBLE);
 			default:
 				return 0;
 			}
@@ -57,94 +59,94 @@ extern int scan_keyw(char *s, enum keyw *res)
 	case 'e':
 		switch (s[1]) {
 		case 'l':
-			return keyw(s, "else", res, ELSE);
+			return keyw(s, sz, "else", res, ELSE);
 		case 'n':
-			return keyw(s, "enum", res, ENUM);
+			return keyw(s, sz, "enum", res, ENUM);
 		case 'x':
-			return keyw(s, "extern", res, EXTERN);
+			return keyw(s, sz, "extern", res, EXTERN);
 		default:
 			return 0;
 		}
 	case 'f':
 		switch (s[1]) {
 		case 'l':
-			return keyw(s, "float", res, FLOAT);
+			return keyw(s, sz, "float", res, FLOAT);
 		case 'o':
-			return keyw(s, "for", res, FOR);
+			return keyw(s, sz, "for", res, FOR);
 		default:
 			return 0;
 		}
 	case 'g':
-		return keyw(s, "goto", res, GOTO);
+		return keyw(s, sz, "goto", res, GOTO);
 	case 'i':
 		switch (s[1]) {
 		case 'f':
-			return keyw(s, "if", res, IF);
+			return keyw(s, sz, "if", res, IF);
 		case 'n':
-			return keyw(s, "int", res, INT);
+			return keyw(s, sz, "int", res, INT);
 		default:
 			return 0;
 		}
 	case 'l':
-		return keyw(s, "long", res, LONG);
+		return keyw(s, sz, "long", res, LONG);
 	case 'r':
 		switch (s[2]) {
 		case 'g':
-			return keyw(s, "register", res, REGISTER);
+			return keyw(s, sz, "register", res, REGISTER);
 		case 't':
-			return keyw(s, "return", res, RETURN);
+			return keyw(s, sz, "return", res, RETURN);
 		default:
 			return 0;
 		}
 	case 's':
 		switch (s[1]) {
 		case 'h':
-			return keyw(s, "short", res, SHORT);
+			return keyw(s, sz, "short", res, SHORT);
 		case 'i':
 			switch (s[2]) {
 			case 'g':
-				return keyw(s, "signed", res, SIGNED);
+				return keyw(s, sz, "signed", res, SIGNED);
 			case 'z':
-				return keyw(s, "sizeof", res, SIZEOF);
+				return keyw(s, sz, "sizeof", res, SIZEOF);
 			default:
 				return 0;
 			}
 		case 't':
 			switch (s[2]) {
 			case 'a':
-				return keyw(s, "static", res, STATIC);
+				return keyw(s, sz, "static", res, STATIC);
 			case 'r':
-				return keyw(s, "struct", res, STRUCT);
+				return keyw(s, sz, "struct", res, STRUCT);
 			default:
 				return 0;
 			}
 		case 'w':
-			return keyw(s, "switch", res, SWITCH);
+			return keyw(s, sz, "switch", res, SWITCH);
 		default:
 			return 0;
 		}
 	case 't':
-		return keyw(s, "typedef", res, TYPEDEF);
+		return keyw(s, sz, "typedef", res, TYPEDEF);
 	case 'u':
 		switch (s[2]) {
 		case 'i':
-			return keyw(s, "union", res, UNION);
+			return keyw(s, sz, "union", res, UNION);
 		case 's':
-			return keyw(s, "unsigned", res, UNSIGNED);
+			return keyw(s, sz, "unsigned", res, UNSIGNED);
 		default:
 			return 0;
 		}
 	case 'v':
 		switch (s[2]) {
 		case 'i':
-			return keyw(s, "void", res, VOID);
+			return keyw(s, sz, "void", res, VOID);
 		case 'l':
-			return keyw(s, "volatile", res, VOLATILE);
+			return keyw(s, sz, "volatile", res, VOLATILE);
 		default:
 			return 0;
 		}
 	case 'w':
-		return keyw(s, "while", res, WHILE);
+		return keyw(s, sz, "while", res, WHILE);
 	default:
 		return 0;
 	}

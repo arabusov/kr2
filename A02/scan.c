@@ -44,19 +44,6 @@ int is_digit(char c)
 	return (c >= '0') && (c <= '9');
 }
 
-int is_proper_idf(char *c)
-{
-	if (!is_letter(*c))
-		return 0;
-	c++;
-	while (*c != '\0') {
-		if (!is_digit(*c) && !is_letter(*c))
-			return FALSE;
-		c++;
-	}
-	return TRUE;
-}
-
 static int gch(void)
 {
 	int ch = getchar();
@@ -83,6 +70,35 @@ static void ungch(int ch)
 		error("Column below zero");
 }
 
+int expect_alphanum(struct tok *t)
+{
+	char s[IDENT_LEN + 1];
+	size_t sz = 0;
+	int c = gch();
+	if (!is_letter(c))
+		return FALSE;
+	do {
+		s[sz++] = c;
+		c = gch();
+		if (sz >= IDENT_LEN) {
+			error("Exceeded alphanum capasity");
+		}
+	} while (is_digit(s[sz]) || is_letter(s[sz]));
+	ungch(c);
+	/* Now, string s[] is ready */
+	if (scan_iconst(s, sz, &t->val.cnst)) {
+		t->type = CONST_TOK;
+		return TRUE;
+	}
+	if (scan_keyw(s, sz, &t->val.keyw)) {
+		t->type = KEYW_TOK;
+		return TRUE;
+	}
+	t->type = IDENT_TOK;
+	t->val.id = save_ident(s, sz);
+	return TRUE;
+}
+
 static void ignore_comment(void)
 {
 	int ch;
@@ -90,32 +106,36 @@ static void ignore_comment(void)
 		ch = gch();
 		if (ch == '*') {
 			ch = gch();
-			if (ch == -1) {
-				return;
+			if (EOF == ch) {
+				error("Unexpected EOF while scanning comment");
 			}
 			if (ch == '/') {
 				return;
 			}
+			ungch(ch);
 		}
-	} while (ch != -1);
+		ungch(ch);
+	} while (EOF != ch);
 }
 
-static bool is_comment_start(int *ch)
+static bool is_comment_start()
 {
-	*ch = gch();
-	if (*ch == '/') {
-		*ch = gch();
-		if (*ch == -1) {
+	int ch = gch();
+	if (ch == '/') {
+		ch = gch();
+		if (EOF == ch) {
 			return FALSE;
 		}
-		if (*ch == '*') {
+		if ('*' == ch) {
 			return TRUE;
 		}
+		ungch(ch);
 	}
+	ungch(ch);
 	return FALSE;
 }
 
-bool expect(const char c)
+bool expect(int c)
 {
 	if (c == gch())
 		return TRUE;
@@ -123,14 +143,14 @@ bool expect(const char c)
 	return FALSE;
 }
 
-bool expect_delim(int *ch, enum delim *delim)
+bool expect_delim(enum delim *delim)
 {
-	*ch = gch();
-	if (IS_DELIM(*ch)) {
-		*delim = *ch;
+	int ch = gch();
+	if (IS_DELIM(ch)) {
+		*delim = ch;
 		return TRUE;
 	}
-	ungch(*ch);
+	ungch(ch);
 	return FALSE;
 }
 
@@ -139,9 +159,10 @@ bool expect_delim(int *ch, enum delim *delim)
 		*op = AO; \
 		return TRUE; \
 	}
-extern bool expect_operator(int *ch, enum op *op)
+extern bool expect_operator(enum op *op)
 {
-	switch (*ch) {
+	int ch = gch();
+	switch (ch) {
 	case '*':
 		*op = AST_OP;
 		return TRUE;
@@ -229,17 +250,43 @@ extern bool expect_operator(int *ch, enum op *op)
 		*op = GR_OP;
 		return TRUE;
 	}
+	ungch(ch);
 	return FALSE;
 }
 
-void skip_wsp(int *const ch)
+void skip_wsp(void)
 {
-	if (!is_whitespace(*ch))
-		return;
+	int ch;
 	do {
-		*ch = gch();
-	} while (is_whitespace(*ch));
-	ungch(*ch);
+		ch = gch();
+	} while (is_whitespace(ch));
+	ungch(ch);
+}
+
+#define CCHAR_BUF_LEN 32
+bool expect_cconst(struct cnst *cnst)
+{
+	char buf[CCHAR_BUF_LEN];
+	size_t sz = 0;
+	int ch = gch();
+	if ('\'' != ch) {
+		ungch(ch);
+		return FALSE;
+	}
+	do {
+		buf[sz] = ch;
+		ch = gch();
+		if (sz >= CCHAR_BUF_LEN) {
+			error("Exceeded char buffer capasity");
+		}
+		sz++;
+		if (EOF == ch) {
+			error("Unexpected EOF while scanning char const");
+		}
+	} while (ch != '\'');
+	buf[sz++] = ch;
+	/* no ungch() at the end, because it will return the closing "'" */
+	return scan_cconst(buf, sz, cnst);
 }
 
 #define NTOKMAX 2048
@@ -248,30 +295,32 @@ int toki = 0;
 
 extern void scan(void)
 {
-	int ch;
 	do {
 		struct tok *tokp = &tok_table[toki];
-		skip_wsp(&ch);
-		if (is_comment_start(&ch)) {
+		skip_wsp();
+		if (is_comment_start()) {
 			ignore_comment();
-			if (ch == EOF)
-				break;
-			continue;
-		}
-		printf("%c: ", ch);
-		if (expect_delim(&ch, &(tokp->val.delim))) {
+			continue; /* don't create a new tok record */
+		} else if (expect_delim(&(tokp->val.delim))) {
 			tokp->type = DELIM_TOK;
-		} else if (expect_operator(&ch, (enum op *)&(tokp->val.op))) {
+		} else if (expect_operator(&(tokp->val.op))) {
 			tokp->type = OP_TOK;
+		} else if (expect_cconst(&(tokp->val.cnst))) {
+			tokp->type = CONST_TOK;
+		} else if (expect_alphanum(tokp)) {
+		} else if (expect(EOF)) {
+			test_at_eof();
 		} else {
-			printf("NULL\n");
-			continue;
+			error("Unknown symbol");
 		}
-		printf("%d %d\n", tokp->type, tokp->val.print);
-		if (toki < NTOKMAX)
+		/* Now, update the token table */
+		if (toki < NTOKMAX) {
 			toki++;
+		} else {
+			error("Token's capasity exceeded");
+		}
 	}
-	while (ch != EOF);
+	while (TRUE);
 }
 
 int main(void)

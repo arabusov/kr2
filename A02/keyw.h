@@ -1,6 +1,9 @@
 #ifndef __KEYW_H__
 #define __KEYW_H__
 
+#include <stddef.h>
+#include "bool.h"
+
 enum keyw {
 	NOT_KEYW,
 	AUTO, DOUBLE, INT, STRUCT,
@@ -13,6 +16,6 @@ enum keyw {
 	DO, IF, STATIC, WHILE
 };
 
-extern int scan_keyw(char *, enum keyw *);
+extern bool scan_keyw(char *, size_t, enum keyw *);
 
 #endif /* __KEYW_H__ */

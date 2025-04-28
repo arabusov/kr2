@@ -4,14 +4,14 @@
 #include <string.h>
 #include <assert.h>
 
-void save_ident(const char *src)
+char *save_ident(const char *src, size_t sz )
 {
 	char *storage;
-	size_t sz;
-	sz = strlen(src);
 	assert(sz <= IDENT_LEN);
 	storage = (char *)malloc(sz + 1);
 	assert(storage != NULL);
-	strcpy(storage, src);
+	memcpy(storage, src, sz);
+	storage[sz] = '\0';
 	table_push(storage);
+	return storage;
 }
