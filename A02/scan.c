@@ -7,16 +7,12 @@
 
 #define COL_LIM 511
 
-static int lineno = 1, col = 1;
+static int lineno = 1, col = 1, prev_line_col = 1;
 
 extern void error(const char *s)
 {
 	fprintf(stderr, "Error at %d[L]:%d[C] -- %s\n", lineno, col, s);
 	exit(EXIT_FAILURE);
-}
-
-static void test_at_eof(void)
-{
 }
 
 int is_whitespace(char c)
@@ -39,23 +35,18 @@ int is_letter(char c)
 	return is_upper_case(c) || is_lower_case(c);
 }
 
-int is_digit(char c)
-{
-	return (c >= '0') && (c <= '9');
-}
-
 static int gch(void)
 {
-	int ch = getchar();
-	if (ch == '\n') {
+	int ch;
+	ch = getchar();
+	if ('\n' == ch) {
 		lineno++;
+		prev_line_col = col;
 		col = 1;
 		return ch;
 	}
-	if (ch == EOF) {
-		test_at_eof();
-		return ch;
-	}
+	if (EOF == ch)
+		return EOF;
 	col++;
 	if (col > COL_LIM)
 		error("Column limit exceeded");
@@ -64,27 +55,35 @@ static int gch(void)
 
 static void ungch(int ch)
 {
+	if (EOF == ch)
+		return;
 	ungetc(ch, stdin);
-	col--;
-	if (col < 0)
-		error("Column below zero");
+	if ('\n' != ch) {
+		col--;
+		if (col < 0)
+			error("Column number below zero");
+	} else {
+		lineno--;
+		col = prev_line_col;
+		if (lineno < 0)
+			error("Line number below zero");
+	}
 }
 
 int expect_alphanum(struct tok *t)
 {
 	char s[IDENT_LEN + 1];
 	size_t sz = 0;
-	int c = gch();
-	if (!is_letter(c))
-		return FALSE;
+	int c;
 	do {
-		s[sz++] = c;
 		c = gch();
+		s[sz++] = c;
 		if (sz >= IDENT_LEN) {
 			error("Exceeded alphanum capasity");
 		}
-	} while (is_digit(s[sz]) || is_letter(s[sz]));
+	} while (is_digit(c) || is_letter(c));
 	ungch(c);
+	sz--;
 	/* Now, string s[] is ready */
 	if (scan_iconst(s, sz, &t->val.cnst)) {
 		t->type = CONST_TOK;
@@ -97,25 +96,6 @@ int expect_alphanum(struct tok *t)
 	t->type = IDENT_TOK;
 	t->val.id = save_ident(s, sz);
 	return TRUE;
-}
-
-static void ignore_comment(void)
-{
-	int ch;
-	do {
-		ch = gch();
-		if (ch == '*') {
-			ch = gch();
-			if (EOF == ch) {
-				error("Unexpected EOF while scanning comment");
-			}
-			if (ch == '/') {
-				return;
-			}
-			ungch(ch);
-		}
-		ungch(ch);
-	} while (EOF != ch);
 }
 
 static bool is_comment_start()
@@ -137,10 +117,24 @@ static bool is_comment_start()
 
 bool expect(int c)
 {
-	if (c == gch())
+	int sym;
+	if (c == (sym = gch()))
 		return TRUE;
-	ungch(c);
+	ungch(sym);
 	return FALSE;
+}
+
+static void ignore_comment(void)
+{
+	int ch;
+	do {
+		if (expect('*'))
+			if (expect('/'))
+				return;
+		ch = gch();
+		if (EOF == ch)
+			error("Unexpected EOF while scanning comment");
+	} while (EOF != ch);
 }
 
 bool expect_delim(enum delim *delim)
@@ -259,7 +253,7 @@ void skip_wsp(void)
 	int ch;
 	do {
 		ch = gch();
-	} while (is_whitespace(ch));
+	} while (is_whitespace(ch) || '\n' == ch);
 	ungch(ch);
 }
 
@@ -284,41 +278,35 @@ bool expect_cconst(struct cnst *cnst)
 			error("Unexpected EOF while scanning char const");
 		}
 	} while (ch != '\'');
-	buf[sz++] = ch;
+	buf[sz] = ch;
 	/* no ungch() at the end, because it will return the closing "'" */
 	return scan_cconst(buf, sz, cnst);
 }
 
-#define NTOKMAX 2048
-struct tok tok_table[NTOKMAX];
-int toki = 0;
-
 extern void scan(void)
 {
 	do {
-		struct tok *tokp = &tok_table[toki];
+		struct tok tok;
+		if (expect(EOF)) {
+			break;
+		}
 		skip_wsp();
 		if (is_comment_start()) {
 			ignore_comment();
-			continue; /* don't create a new tok record */
-		} else if (expect_delim(&(tokp->val.delim))) {
-			tokp->type = DELIM_TOK;
-		} else if (expect_operator(&(tokp->val.op))) {
-			tokp->type = OP_TOK;
-		} else if (expect_cconst(&(tokp->val.cnst))) {
-			tokp->type = CONST_TOK;
-		} else if (expect_alphanum(tokp)) {
-		} else if (expect(EOF)) {
-			test_at_eof();
+			continue; /* above: no token generated */
+		} else if (expect_delim(&(tok.val.delim))) {
+			tok.type = DELIM_TOK;
+		} else if (expect_operator(&(tok.val.op))) {
+			tok.type = OP_TOK;
+		} else if (expect_cconst(&(tok.val.cnst))) {
+			tok.type = CONST_TOK;
+		} else if (expect_alphanum(&tok)) {
 		} else {
-			error("Unknown symbol");
+			char err_msg[] = "X: Unknown symbol";
+			err_msg[0] = getchar();
+			error(err_msg);
 		}
-		/* Now, update the token table */
-		if (toki < NTOKMAX) {
-			toki++;
-		} else {
-			error("Token's capasity exceeded");
-		}
+		emit_token(&tok);
 	}
 	while (TRUE);
 }

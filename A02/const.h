@@ -23,7 +23,7 @@ enum iconst_type { NOT_INT_CONST, INT_CONST, UINT_CONST, LONG_CONST,
 };
 
 struct const_type {
-	enum { NOT_CONST, I_CONST, CH_CONST, STR_CONST, ENUM_CONST } type;
+	enum { NOT_CONST, I_CONST, CH_CONST, STR_CONST } type;
 	enum iconst_type int_type;
 };
 
@@ -34,5 +34,6 @@ struct cnst {
 
 extern int scan_iconst(char *, size_t, struct cnst *);
 extern int scan_cconst(char *, size_t, struct cnst *);
+extern int is_digit(char);
 
 #endif /* __CONST_H__ */

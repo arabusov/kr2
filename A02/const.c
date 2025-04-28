@@ -246,6 +246,8 @@ static enum base det_base(char *src, size_t src_size)
 {
 	if (src_size == 0)
 		return NOINT;
+	if (!is_digit(src[0]))
+		return NOINT;
 	if (src_size == 1)
 		return DEC;	/* wrong for src[0] == '0' but who cares */
 	if (src_size > 2)
@@ -354,4 +356,9 @@ extern int scan_cconst(char *src, size_t sz, struct cnst *cn)
 	src++;
 	sz -= 2;
 	return scan_cconst_nq(src, sz, cn);
+}
+
+extern int is_digit(char c)
+{
+	return (c >= '0') && (c <= '9');
 }
