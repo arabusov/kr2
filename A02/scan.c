@@ -84,6 +84,8 @@ int expect_alphanum(struct tok *t)
 	} while (is_digit(c) || is_letter(c));
 	ungch(c);
 	sz--;
+	if (sz == 0)
+		return FALSE;
 	/* Now, string s[] is ready */
 	if (scan_iconst(s, sz, &t->val.cnst)) {
 		t->type = CONST_TOK;
@@ -287,10 +289,10 @@ extern void scan(void)
 {
 	do {
 		struct tok tok;
+		skip_wsp();
 		if (expect(EOF)) {
 			break;
 		}
-		skip_wsp();
 		if (is_comment_start()) {
 			ignore_comment();
 			continue; /* above: no token generated */

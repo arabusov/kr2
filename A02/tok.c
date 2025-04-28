@@ -17,7 +17,7 @@ extern void emit_token(struct tok *tok)
 			case I_CONST: printf(" %32" TARGlu "\n",
 					     (tulong)tok->val.cnst.val.int_val.ulong_val);
 				      break;
-			case CH_CONST: printf(" '%c'\n",
+			case CH_CONST: printf(" '%32c'\n",
 					      tok->val.cnst.val.char_val);
 				       break;
 			default: fprintf(stderr, "error const");
