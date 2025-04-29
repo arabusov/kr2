@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 #include "bool.h"
@@ -8,6 +9,10 @@
 #define COL_LIM 511
 
 static int lineno = 1, col = 1, prev_line_col = 1;
+#define FNAME_LIM 256
+static char fname[FNAME_LIM];
+#define N_LM_FLAGS 4
+static bool lm_flags[N_LM_FLAGS];
 
 extern void error(const char *s)
 {
@@ -119,9 +124,10 @@ static bool is_comment_start()
 
 bool expect(int c)
 {
-	int sym;
-	if (c == (sym = gch()))
+	int sym = gch();
+	if (c == sym)
 		return TRUE;
+	printf("Unmatched %c\n", (char)sym);
 	ungch(sym);
 	return FALSE;
 }
@@ -250,6 +256,45 @@ extern bool expect_operator(enum op *op)
 	return FALSE;
 }
 
+void linemarkers(void)
+{
+	/* # 474 "/usr/include/features.h" 2 3 4 */
+	/* hash and space are eaten already */
+	int i, lfl[4];
+	int res = scanf("%d %s %d %d %d %d", &lineno, fname,
+			&lfl[0], &lfl[1], &lfl[2], &lfl[3]);
+	if (2 > res)
+		error("Linemarkers error scanning line# and file name");
+	memset(lm_flags, 0, sizeof(lm_flags));
+	for (i = 0; i < res - 2; i++) {
+		lm_flags[lfl[i]] = TRUE;
+	}
+	printf("Read %d variables\n", res);
+	printf("%c\n", getchar());
+	if (!expect('\n'))
+		error("Linemarkers: expected newline");
+	col = 1;
+}
+
+void pp(void)
+{
+	error("Preprocessor feature is not implemented");
+}
+
+void expect_pp(void)
+{
+	if (1 == col) {
+		if (expect('#')) {
+			if (expect(' ')) {
+				linemarkers();
+			} else {
+				pp();
+			}
+		}
+	}
+}
+
+
 void skip_wsp(void)
 {
 	int ch;
@@ -289,6 +334,7 @@ extern void scan(void)
 {
 	do {
 		struct tok tok;
+		expect_pp();
 		skip_wsp();
 		if (expect(EOF)) {
 			break;
