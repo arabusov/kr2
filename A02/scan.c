@@ -7,16 +7,21 @@
 #include "tok.h"
 
 #define COL_LIM 511
-
+static char curr_str[COL_LIM+1];
 static int lineno = 1, col = 1, prev_line_col = 1;
+
 #define FNAME_LIM 256
 static char fname[FNAME_LIM];
+
 #define N_LM_FLAGS 4
 static bool lm_flags[N_LM_FLAGS];
 
 extern void error(const char *s)
 {
 	fprintf(stderr, "Error at %d[L]:%d[C] -- %s\n", lineno, col, s);
+	fprintf(stderr, "%s", curr_str);
+	scanf("%s", curr_str);
+	fprintf(stderr, "%s\n", curr_str);
 	exit(EXIT_FAILURE);
 }
 
@@ -35,9 +40,14 @@ int is_lower_case(char c)
 	return (c >= 'a') && (c <= 'z');
 }
 
-int is_letter(char c)
+static int is_letter(char c)
 {
 	return is_upper_case(c) || is_lower_case(c);
+}
+
+static bool is_c_letter(char c)
+{
+	return is_letter(c) || ('_' == c);
 }
 
 static int gch(void)
@@ -48,10 +58,12 @@ static int gch(void)
 		lineno++;
 		prev_line_col = col;
 		col = 1;
+		memset(curr_str, 0, COL_LIM);
 		return ch;
 	}
 	if (EOF == ch)
 		return EOF;
+	curr_str[col-1] = ch;
 	col++;
 	if (col > COL_LIM)
 		error("Column limit exceeded");
@@ -86,7 +98,7 @@ int expect_alphanum(struct tok *t)
 		if (sz >= IDENT_LEN) {
 			error("Exceeded alphanum capasity");
 		}
-	} while (is_digit(c) || is_letter(c));
+	} while (is_digit(c) || is_c_letter(c));
 	ungch(c);
 	sz--;
 	if (sz == 0)
@@ -127,7 +139,6 @@ bool expect(int c)
 	int sym = gch();
 	if (c == sym)
 		return TRUE;
-	printf("Unmatched %c\n", (char)sym);
 	ungch(sym);
 	return FALSE;
 }
@@ -256,7 +267,7 @@ extern bool expect_operator(enum op *op)
 	return FALSE;
 }
 
-void linemarkers(void)
+static bool linemarkers(void)
 {
 	/* # 474 "/usr/include/features.h" 2 3 4 */
 	/* hash and space are eaten already */
@@ -267,35 +278,33 @@ void linemarkers(void)
 		error("Linemarkers error scanning line# and file name");
 	memset(lm_flags, 0, sizeof(lm_flags));
 	for (i = 0; i < res - 2; i++) {
-		lm_flags[lfl[i]] = TRUE;
+		lm_flags[lfl[i]-1] = TRUE;
 	}
-	printf("Read %d variables\n", res);
-	printf("%c\n", getchar());
-	if (!expect('\n'))
-		error("Linemarkers: expected newline");
 	col = 1;
+	return TRUE;
 }
 
-void pp(void)
+static bool pp(void)
 {
 	error("Preprocessor feature is not implemented");
+	return FALSE;
 }
 
-void expect_pp(void)
+static bool expect_pp(void)
 {
 	if (1 == col) {
 		if (expect('#')) {
 			if (expect(' ')) {
-				linemarkers();
+				return linemarkers();
 			} else {
-				pp();
+				return pp();
 			}
 		}
 	}
+	return FALSE;
 }
 
-
-void skip_wsp(void)
+static void skip_wsp(void)
 {
 	int ch;
 	do {
@@ -334,8 +343,9 @@ extern void scan(void)
 {
 	do {
 		struct tok tok;
-		expect_pp();
 		skip_wsp();
+		if (expect_pp())
+			continue;
 		if (expect(EOF)) {
 			break;
 		}
