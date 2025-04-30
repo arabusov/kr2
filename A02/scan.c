@@ -313,15 +313,19 @@ static void skip_wsp(void)
 	ungch(ch);
 }
 
-#define CCHAR_BUF_LEN 32
-bool expect_cconst(struct cnst *cnst)
+#define CCHAR_BUF_LEN 64
+bool expect_csconst(struct cnst *cnst)
 {
 	char buf[CCHAR_BUF_LEN];
 	size_t sz = 0;
+	int c_or_s = '\'';
 	int ch = gch();
 	if ('\'' != ch) {
-		ungch(ch);
-		return FALSE;
+		if ('"' != ch) {
+			ungch(ch);
+			return FALSE;
+		}
+		c_or_s = '"';
 	}
 	do {
 		buf[sz] = ch;
@@ -333,10 +337,13 @@ bool expect_cconst(struct cnst *cnst)
 		if (EOF == ch) {
 			error("Unexpected EOF while scanning char const");
 		}
-	} while (ch != '\'');
+	} while (ch != c_or_s);
 	buf[sz] = ch;
 	/* no ungch() at the end, because it will return the closing "'" */
-	return scan_cconst(buf, sz, cnst);
+	if ('\'' == c_or_s)
+		return scan_cconst(buf, sz, cnst);
+	error("String scanner not yet implemented");
+	return FALSE;
 }
 
 extern void scan(void)
@@ -356,7 +363,7 @@ extern void scan(void)
 			tok.type = DELIM_TOK;
 		} else if (expect_operator(&(tok.val.op))) {
 			tok.type = OP_TOK;
-		} else if (expect_cconst(&(tok.val.cnst))) {
+		} else if (expect_csconst(&(tok.val.cnst))) {
 			tok.type = CONST_TOK;
 		} else if (expect_alphanum(&tok)) {
 		} else {
