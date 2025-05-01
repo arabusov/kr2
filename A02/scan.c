@@ -418,7 +418,7 @@ extern void scan(void)
 			err_msg[0] = getchar();
 			error(err_msg);
 		}
-		/* emit_token(&tok); */
+		emit_token(&tok);
 	}
 	while (TRUE);
 }
