@@ -4,7 +4,7 @@
 #include <string.h>
 #include <assert.h>
 
-char *save_ident(const char *src, size_t sz )
+char *save_ident(const char *src, size_t sz)
 {
 	char *storage;
 	assert(sz <= IDENT_LEN);

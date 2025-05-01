@@ -35,5 +35,7 @@ struct cnst {
 extern int scan_iconst(char *, size_t, struct cnst *);
 extern int scan_cconst(char *, size_t, struct cnst *);
 extern int is_digit(char);
+extern int esc(char *, size_t, struct cnst *);
+extern int is_digit_8_16(char, int);
 
 #endif /* __CONST_H__ */

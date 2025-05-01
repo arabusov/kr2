@@ -115,7 +115,7 @@ int ovflow_16(int digit, int bpi)
 	return 0;
 }
 
-int is_digit_8_16(char c, int bpd)
+extern int is_digit_8_16(char c, int bpd)
 {
 	if (bpd == 3)
 		if ((c >= '0') && (c <= '7'))
@@ -234,7 +234,7 @@ static int decode(char *src, int src_size, struct cnst *cn, enum base cbase)
 static int num_cconst(char *src, size_t sz, struct cnst *cn)
 {
 	if (decode(src, sz, cn, OCT)) {
-		if (cn->type.type == I_CONST && cn->val.int_val.ulong_val < 128) {
+		if (cn->type.type == I_CONST && cn->val.int_val.int_val < 128) {
 			cn->type.type = CH_CONST;
 			return 1;
 		}
@@ -321,7 +321,7 @@ static int symb_cconst(char c, struct cnst *cn)
 	return 0;
 }
 
-static int esc(char *src, size_t sz, struct cnst *cn)
+extern int esc(char *src, size_t sz, struct cnst *cn)
 {
 	if (sz == 1)
 		return symb_cconst(src[0], cn);

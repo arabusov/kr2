@@ -2,9 +2,8 @@
 #include <string.h>
 #include "keyw.h"
 
-static bool keyw(
-		char *s, size_t sz, const char *cmp,
-		enum keyw *res, const enum keyw kw)
+static bool keyw(char *s, size_t sz, const char *cmp,
+		 enum keyw *res, const enum keyw kw)
 {
 	if (memcmp(s, cmp, sz))
 		return FALSE;

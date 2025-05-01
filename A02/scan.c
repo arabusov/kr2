@@ -7,7 +7,7 @@
 #include "tok.h"
 
 #define COL_LIM 511
-static char curr_str[COL_LIM+1];
+static char curr_str[COL_LIM + 1];
 static int lineno = 1, col = 1, prev_line_col = 1;
 
 #define FNAME_LIM 256
@@ -63,7 +63,7 @@ static int gch(void)
 	}
 	if (EOF == ch)
 		return EOF;
-	curr_str[col-1] = ch;
+	curr_str[col - 1] = ch;
 	col++;
 	if (col > COL_LIM)
 		error("Column limit exceeded");
@@ -278,7 +278,7 @@ static bool linemarkers(void)
 		error("Linemarkers error scanning line# and file name");
 	memset(lm_flags, 0, sizeof(lm_flags));
 	for (i = 0; i < res - 2; i++) {
-		lm_flags[lfl[i]-1] = TRUE;
+		lm_flags[lfl[i] - 1] = TRUE;
 	}
 	col = 1;
 	return TRUE;
@@ -313,19 +313,15 @@ static void skip_wsp(void)
 	ungch(ch);
 }
 
-#define CCHAR_BUF_LEN 64
-bool expect_csconst(struct cnst *cnst)
+#define CCHAR_BUF_LEN 8
+static bool expect_cconst(struct cnst *cnst)
 {
 	char buf[CCHAR_BUF_LEN];
 	size_t sz = 0;
-	int c_or_s = '\'';
 	int ch = gch();
 	if ('\'' != ch) {
-		if ('"' != ch) {
-			ungch(ch);
-			return FALSE;
-		}
-		c_or_s = '"';
+		ungch(ch);
+		return FALSE;
 	}
 	do {
 		buf[sz] = ch;
@@ -337,13 +333,63 @@ bool expect_csconst(struct cnst *cnst)
 		if (EOF == ch) {
 			error("Unexpected EOF while scanning char const");
 		}
-	} while (ch != c_or_s);
+	} while ('\'' != ch);
 	buf[sz] = ch;
 	/* no ungch() at the end, because it will return the closing "'" */
-	if ('\'' == c_or_s)
-		return scan_cconst(buf, sz, cnst);
-	error("String scanner not yet implemented");
-	return FALSE;
+	return scan_cconst(buf, sz, cnst);
+}
+
+static char escape_char(void)
+{
+	char buf[CCHAR_BUF_LEN];
+	size_t sz = 0;
+	struct cnst cn;
+	int ch = gch();
+	if (is_digit_8_16(ch, 3)) {
+		do {
+			buf[sz++] = ch;
+			ch = gch();
+		} while (is_digit_8_16(ch, 3));
+		ungch(ch);
+	} else {
+		sz = 1;
+		buf[0] = ch;
+	}
+	if (esc(buf, sz, &cn))
+		return cn.val.char_val;
+	{
+		char err[CCHAR_BUF_LEN + 22] = "Wrong escape sequence ";
+		buf[sz] = '\0';
+		strcat(err, buf);
+		error(err);
+	}
+	return -1;
+}
+
+#define STRING_BUF_LEN 32
+static bool expect_sconst(struct cnst *cnst)
+{
+	char buf[STRING_BUF_LEN];
+	size_t sz = 0;
+	int ch = gch();
+	if ('"' != ch) {
+		ungch(ch);
+		return FALSE;
+	}
+	do {
+		ch = gch();
+		if (EOF == ch)
+			error("Unexpected EOF while scanning string const");
+		if ('\\' == ch) {
+			if (expect('\n'))
+				continue;
+			ch = escape_char();
+		}
+		buf[sz++] = ch;
+	} while ('"' != ch);
+	cnst->type.type = STR_CONST;
+	cnst->val.str_val = save_ident(buf, sz);
+	return TRUE;
 }
 
 extern void scan(void)
@@ -358,12 +404,13 @@ extern void scan(void)
 		}
 		if (is_comment_start()) {
 			ignore_comment();
-			continue; /* above: no token generated */
+			continue;	/* above: no token generated */
 		} else if (expect_delim(&(tok.val.delim))) {
 			tok.type = DELIM_TOK;
 		} else if (expect_operator(&(tok.val.op))) {
 			tok.type = OP_TOK;
-		} else if (expect_csconst(&(tok.val.cnst))) {
+		} else if (expect_cconst(&(tok.val.cnst)) ||
+			   expect_sconst(&(tok.val.cnst))) {
 			tok.type = CONST_TOK;
 		} else if (expect_alphanum(&tok)) {
 		} else {
@@ -371,7 +418,7 @@ extern void scan(void)
 			err_msg[0] = getchar();
 			error(err_msg);
 		}
-		emit_token(&tok);
+		/* emit_token(&tok); */
 	}
 	while (TRUE);
 }
