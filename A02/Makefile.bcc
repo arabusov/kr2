@@ -1,10 +1,10 @@
-CFLAGS=-ansi -pedantic -Wall -Wextra -Werror -Wfatal-errors
+CC=bcc
+CFLAGS=-ansi
 CFLAGS+=-I.
-CFLAGS+=-g -ggdb
 LD=$(CC)
-LDFLAGS=-g -ggdb
+LDFLAGS=
 .SUFFIXES: .o.c
-OBJ=ident.o table.o keyw.o const.o scan.o tok.o
+OBJ=ident.o table.o keyw.o const.o scan.o
 TESTO=keyw.o const.o utests.o
 
 TESTS=run_utests
