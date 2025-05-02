@@ -117,29 +117,22 @@ int expect_alphanum(struct tok *t)
 	return TRUE;
 }
 
-static bool is_comment_start()
-{
-	int ch = gch();
-	if (ch == '/') {
-		ch = gch();
-		if (EOF == ch) {
-			return FALSE;
-		}
-		if ('*' == ch) {
-			return TRUE;
-		}
-		ungch(ch);
-	}
-	ungch(ch);
-	return FALSE;
-}
-
-bool expect(int c)
+static bool expect(int c)
 {
 	int sym = gch();
 	if (c == sym)
 		return TRUE;
 	ungch(sym);
+	return FALSE;
+}
+
+static bool is_comment_start(void)
+{
+	if (expect('/')) {
+		if (expect('*'))
+			return TRUE;
+		ungch('/');
+	}
 	return FALSE;
 }
 
