@@ -317,19 +317,19 @@ static void skip_wsp(void)
 static bool expect_cconst(struct cnst *cnst)
 {
 	char buf[CCHAR_BUF_LEN];
-	size_t sz = 0;
+	size_t sz = 1;
 	int ch = gch();
 	if ('\'' != ch) {
 		ungch(ch);
 		return FALSE;
 	}
+	buf[0] = '\'';
 	do {
-		buf[sz] = ch;
 		ch = gch();
 		if (sz >= CCHAR_BUF_LEN) {
 			error("Exceeded char buffer capasity");
 		}
-		sz++;
+		buf[sz++] = ch;
 		if (EOF == ch) {
 			error("Unexpected EOF while scanning char const");
 		}
@@ -392,7 +392,7 @@ static bool expect_sconst(struct cnst *cnst)
 	return TRUE;
 }
 
-extern void scan(void)
+extern void scan(bool quiet)
 {
 	do {
 		struct tok tok;
@@ -418,13 +418,18 @@ extern void scan(void)
 			err_msg[0] = getchar();
 			error(err_msg);
 		}
-		emit_token(&tok);
+		if (!quiet)
+			emit_token(&tok);
 	}
 	while (TRUE);
 }
 
-int main(void)
+int main(int argc, char *argv[])
 {
-	scan();
+	bool quiet = FALSE;
+	if (argc == 2)
+		if (0 == strcmp(argv[1], "-q"))
+			quiet = TRUE;
+	scan(quiet);
 	return 0;
 }
