@@ -12,8 +12,8 @@ typedef uint32_t tulong;
 #include <inttypes.h>
 
 #define TARGd PRId16
-#define TARGu PRIu16
+#define TARGu PRIX16
 #define TARGld PRId32
-#define TARGlu PRIu32
+#define TARGlu PRIX32
 
 #endif /* __TYPES_H__ */

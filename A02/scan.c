@@ -385,44 +385,44 @@ static bool expect_sconst(struct cnst *cnst)
 	return TRUE;
 }
 
-extern void scan(bool quiet)
+extern void scan(struct tok *tok)
 {
+	tok->type = INVALID_TOK;
 	do {
-		struct tok tok;
 		skip_wsp();
 		if (expect_pp())
 			continue;
 		if (expect(EOF)) {
-			break;
+			tok->type = EOF_TOK;
+			return;
 		}
 		if (is_comment_start()) {
 			ignore_comment();
 			continue;	/* above: no token generated */
-		} else if (expect_delim(&(tok.val.delim))) {
-			tok.type = DELIM_TOK;
-		} else if (expect_operator(&(tok.val.op))) {
-			tok.type = OP_TOK;
-		} else if (expect_cconst(&(tok.val.cnst)) ||
-			   expect_sconst(&(tok.val.cnst))) {
-			tok.type = CONST_TOK;
-		} else if (expect_alphanum(&tok)) {
+		} else if (expect_delim(&(tok->val.delim))) {
+			tok->type = DELIM_TOK;
+		} else if (expect_operator(&(tok->val.op))) {
+			tok->type = OP_TOK;
+		} else if (expect_cconst(&(tok->val.cnst)) ||
+			   expect_sconst(&(tok->val.cnst))) {
+			tok->type = CONST_TOK;
+		} else if (expect_alphanum(tok)) {
 		} else {
 			char err_msg[] = "X: Unknown symbol";
 			err_msg[0] = getchar();
 			error(err_msg);
 		}
-		if (!quiet)
-			emit_token(&tok);
+		return;
 	}
 	while (TRUE);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
-	bool quiet = FALSE;
-	if (argc == 2)
-		if (0 == strcmp(argv[1], "-q"))
-			quiet = TRUE;
-	scan(quiet);
+	struct tok tok;
+	do {
+		scan(&tok);
+		emit_token(&tok);
+	} while ((EOF_TOK != tok.type) && (INVALID_TOK != tok.type));
 	return 0;
 }

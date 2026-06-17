@@ -7,7 +7,8 @@
 #include "op.h"
 #include "delim.h"
 
-enum tok_type { IDENT_TOK, KEYW_TOK, CONST_TOK, OP_TOK, DELIM_TOK };
+enum tok_type { INVALID_TOK, IDENT_TOK, KEYW_TOK,
+    CONST_TOK, OP_TOK, DELIM_TOK, EOF_TOK };
 
 union tok_val {
 	ident id;
