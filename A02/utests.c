@@ -228,6 +228,8 @@ static struct ktest {
 	int res;
 	enum keyw class;
 } keyw_tests[] = {
+	{ "", FALSE, NOT_KEYW },	/* C23 */
+	{ "a", FALSE, NOT_KEYW },	/* C23 */
 	{ "alignas", FALSE, NOT_KEYW },	/* C23 */
 	{ "alignof", FALSE, NOT_KEYW },	/* C23 */
 	{ "auto", TRUE, AUTO },
