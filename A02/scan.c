@@ -388,17 +388,19 @@ static bool expect_sconst(struct cnst *cnst)
 extern void scan(struct tok *tok)
 {
 	tok->type = INVALID_TOK;
-	do {
+/*	do { */
 		skip_wsp();
 		if (expect_pp())
-			continue;
+			return;
+			/* continue; */
 		if (expect(EOF)) {
 			tok->type = EOF_TOK;
 			return;
 		}
 		if (is_comment_start()) {
 			ignore_comment();
-			continue;	/* above: no token generated */
+			return;
+			/* continue; */
 		} else if (expect_delim(&(tok->val.delim))) {
 			tok->type = DELIM_TOK;
 		} else if (expect_operator(&(tok->val.op))) {
@@ -413,16 +415,62 @@ extern void scan(struct tok *tok)
 			error(err_msg);
 		}
 		return;
+/*	}
+	while (TRUE); */
+}
+
+int expect_basic_type(struct tok *tok)
+{
+	if (KEYW_TOK != tok->type)
+		return 0;
+	switch (tok->val.keyw) {
+		case CHAR:
+		case INT:
+		case UNSIGNED:
+		case LONG:
+			printf("matched basic type\n");
+			return 1;
+		default: return 0;
 	}
-	while (TRUE);
+	return 0;
+}
+
+struct tok lookahead;
+
+void match_type()
+{
+	if (expect_basic_type(&lookahead))
+		scan(&lookahead);
+	error("Parse error: expected basic type, got this:");
+	emit_token(&lookahead);
+}
+
+void match_list()
+{
+	error("WIP: match_list");
+}
+
+void match_sc()
+{
+	if (DELIM_TOK == lookahead.type)
+		if (SEMICOLON_DELIM == lookahead.val.delim)
+			scan(&lookahead);
+	error("Expected semicolon, got this:");
+	emit_token(&lookahead);
+}
+
+extern void parse()
+{
+	scan(&lookahead);	/* initialize lookahead */
+	emit_token(&lookahead);
+	do {
+		match_type(); match_list(); match_sc();
+	} while ((EOF_TOK != lookahead.type)
+			&& (INVALID_TOK != lookahead.type));
 }
 
 int main()
 {
-	struct tok tok;
-	do {
-		scan(&tok);
-		emit_token(&tok);
-	} while ((EOF_TOK != tok.type) && (INVALID_TOK != tok.type));
+	parse();
 	return 0;
 }
