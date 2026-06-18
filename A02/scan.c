@@ -165,7 +165,7 @@ bool expect_delim(enum delim *delim)
 		*op = AO; \
 		return TRUE; \
 	}
-extern bool expect_operator(enum op *op)
+bool expect_operator(enum op *op)
 {
 	int ch = gch();
 	switch (ch) {
@@ -388,89 +388,30 @@ static bool expect_sconst(struct cnst *cnst)
 extern void scan(struct tok *tok)
 {
 	tok->type = INVALID_TOK;
-/*	do { */
-		skip_wsp();
-		if (expect_pp())
-			return;
-			/* continue; */
-		if (expect(EOF)) {
-			tok->type = EOF_TOK;
-			return;
-		}
-		if (is_comment_start()) {
-			ignore_comment();
-			return;
-			/* continue; */
-		} else if (expect_delim(&(tok->val.delim))) {
-			tok->type = DELIM_TOK;
-		} else if (expect_operator(&(tok->val.op))) {
-			tok->type = OP_TOK;
-		} else if (expect_cconst(&(tok->val.cnst)) ||
-			   expect_sconst(&(tok->val.cnst))) {
-			tok->type = CONST_TOK;
-		} else if (expect_alphanum(tok)) {
-		} else {
-			char err_msg[] = "X: Unknown symbol";
-			err_msg[0] = getchar();
-			error(err_msg);
-		}
+	skip_wsp();
+	if (expect_pp())
 		return;
-/*	}
-	while (TRUE); */
-}
-
-int expect_basic_type(struct tok *tok)
-{
-	if (KEYW_TOK != tok->type)
-		return 0;
-	switch (tok->val.keyw) {
-		case CHAR:
-		case INT:
-		case UNSIGNED:
-		case LONG:
-			printf("matched basic type\n");
-			return 1;
-		default: return 0;
+	if (expect(EOF)) {
+		tok->type = EOF_TOK;
+		return;
 	}
-	return 0;
+	if (is_comment_start()) {
+		ignore_comment();
+		return;
+		/* continue; */
+	} else if (expect_delim(&(tok->val.delim))) {
+		tok->type = DELIM_TOK;
+	} else if (expect_operator(&(tok->val.op))) {
+		tok->type = OP_TOK;
+	} else if (expect_cconst(&(tok->val.cnst)) ||
+			expect_sconst(&(tok->val.cnst))) {
+		tok->type = CONST_TOK;
+	} else if (expect_alphanum(tok)) {
+	} else {
+		char err_msg[] = "X: Unknown symbol";
+		err_msg[0] = getchar();
+		error(err_msg);
+	}
+	return;
 }
 
-struct tok lookahead;
-
-void match_type()
-{
-	if (expect_basic_type(&lookahead))
-		scan(&lookahead);
-	error("Parse error: expected basic type, got this:");
-	emit_token(&lookahead);
-}
-
-void match_list()
-{
-	error("WIP: match_list");
-}
-
-void match_sc()
-{
-	if (DELIM_TOK == lookahead.type)
-		if (SEMICOLON_DELIM == lookahead.val.delim)
-			scan(&lookahead);
-	error("Expected semicolon, got this:");
-	emit_token(&lookahead);
-}
-
-extern void parse()
-{
-	scan(&lookahead);	/* initialize lookahead */
-	emit_token(&lookahead);
-	do {
-		match_type(); match_list(); match_sc();
-	} while ((EOF_TOK != lookahead.type)
-			&& (INVALID_TOK != lookahead.type));
-}
-
-int main()
-{
-	parse();
-	return 0;
-}
