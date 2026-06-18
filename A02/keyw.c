@@ -14,10 +14,13 @@ static bool keyw(char *s, size_t sz, const char *cmp, const size_t ksz,
 	return FALSE;
 }
 
+#define LM(x) (sizeof(x) - 1)
 #define DM(x) (x), (sizeof(x)-1)
 
 extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 {
+	if (sz <= 1)
+		return 0;
 	switch (s[0]) {
 	case 'a':
 		return keyw(s, sz, DM("auto"), res, AUTO);
@@ -30,6 +33,8 @@ extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 		case 'h':
 			return keyw(s, sz, DM("char"), res, CHAR);
 		case 'o':
+			if (sz <= 3)
+				return 0;
 			if (s[2] != 'n')
 				return 0;
 			switch (s[3]) {
@@ -94,6 +99,8 @@ extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 	case 'l':
 		return keyw(s, sz, DM("long"), res, LONG);
 	case 'r':
+		if (sz <= 3)
+			return 0;
 		switch (s[2]) {
 		case 'g':
 			return keyw(s, sz, DM("register"), res, REGISTER);
@@ -107,6 +114,8 @@ extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 		case 'h':
 			return keyw(s, sz, DM("short"), res, SHORT);
 		case 'i':
+			if (sz <= 3)
+				return 0;
 			switch (s[2]) {
 			case 'g':
 				return keyw(s, sz, DM("signed"), res, SIGNED);
@@ -116,6 +125,8 @@ extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 				return 0;
 			}
 		case 't':
+			if (sz <= 3)
+				return 0;
 			switch (s[2]) {
 			case 'a':
 				return keyw(s, sz, DM("static"), res, STATIC);
@@ -132,6 +143,8 @@ extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 	case 't':
 		return keyw(s, sz, DM("typedef"), res, TYPEDEF);
 	case 'u':
+		if (sz <= 3)
+			return 0;
 		switch (s[2]) {
 		case 'i':
 			return keyw(s, sz, DM("union"), res, UNION);
@@ -141,6 +154,8 @@ extern int scan_keyw(char *s, size_t sz, enum keyw *res)
 			return 0;
 		}
 	case 'v':
+		if (sz <= 3)
+			return 0;
 		switch (s[2]) {
 		case 'i':
 			return keyw(s, sz, DM("void"), res, VOID);
