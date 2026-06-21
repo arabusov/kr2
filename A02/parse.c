@@ -88,6 +88,10 @@ void match_type()
                         scan(&lookahead);
                         return;
                 }
+                if (expect_char(&lookahead)) {
+                        scan(&lookahead);
+                        return;
+                }
                 return;
         }
         if (expect_int(&lookahead) || expect_long(&lookahead) || expect_unsigned(&lookahead)) {
@@ -152,7 +156,8 @@ int expect_assignment()
 		scan(&lookahead);
 		if (expect_assign_op()) {
 			scan(&lookahead);
-			if (expect_rval()) {
+                        if (expect_rval()) {
+                                scan(&lookahead);
 				return 1;
 			}
 			error("Parse error: expected rval after assign_op");
@@ -165,7 +170,6 @@ int expect_assignment()
 void match_list()
 {
 	if (expect_assignment()) {
-		scan(&lookahead);
 		return;
 	}
 	if (expect_comma()) {
