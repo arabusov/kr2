@@ -135,7 +135,7 @@ int expect_ident()
 	return 0;
 }
 
-int expect_lval()
+int expect_lval_simple()
 {
 	if (expect_deref())
 		scan(&lookahead);
@@ -159,10 +159,34 @@ int expect_rval()
 	return (IDENT_TOK == lookahead.type) || (CONST_TOK == lookahead.type);
 }
 
+static int is_rsqbr()
+{
+        return (DELIM_TOK == lookahead.type) && (RSQBR_DELIM == lookahead.val.delim);
+}
+
+int expect_array_def()
+{
+        if ((DELIM_TOK == lookahead.type) && (LSQBR_DELIM == lookahead.val.delim)) {
+                scan(&lookahead);
+                if (is_rsqbr())
+                        return 1;
+                if ((CONST_TOK == lookahead.type) && (I_CONST == lookahead.val.cnst.type.type)) {
+                        scan(&lookahead);
+                        if (is_rsqbr())
+                                return 1;
+                        error("Expected ]");
+                }
+                error("Expected I_CONST or ]");
+        }
+        return 0;
+}
+
 int expect_assignment()
 {
-	if (expect_lval()) {
+	if (expect_lval_simple()) {
 		scan(&lookahead);
+                while (expect_array_def())
+                        scan(&lookahead);
 		if (expect_assign_op()) {
 			scan(&lookahead);
                         if (expect_rval()) {
