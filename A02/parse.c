@@ -147,6 +147,15 @@ int expect_lval()
 
 int expect_rval()
 {
+        if (OP_TOK == lookahead.type) {
+                if (AND_OP == lookahead.val.op) {
+                        scan(&lookahead);
+                        if (IDENT_TOK == lookahead.type)
+                                return 1;
+                        return 0;
+                }
+                return 0;
+        }
 	return (IDENT_TOK == lookahead.type) || (CONST_TOK == lookahead.type);
 }
 
