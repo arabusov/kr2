@@ -147,10 +147,18 @@ int expect_lval_simple()
 
 int expect_rval()
 {
+        if ((DELIM_TOK == lookahead.type) && (LPAR_DELIM == lookahead.val.delim)) {
+                scan(&lookahead);
+                if (expect_rval())
+                        scan(&lookahead);
+                if ((DELIM_TOK == lookahead.type) && (RPAR_DELIM == lookahead.val.delim))
+                        return 1;
+                error("Expected )");
+        }
         if (OP_TOK == lookahead.type) {
                 if (AND_OP == lookahead.val.op) {
                         scan(&lookahead);
-                        if (IDENT_TOK == lookahead.type)
+                        if (expect_rval())
                                 return 1;
                         return 0;
                 }
