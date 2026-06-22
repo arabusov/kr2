@@ -1,1 +1,4 @@
-run_tests
+run_utests
+parse
+*.gc*
+coverage

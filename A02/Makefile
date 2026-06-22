@@ -1,27 +1,42 @@
-CC=cc
-CFLAGS=-I.
-LD=cc
-LDFLAGS=
+CFLAGS=-ansi -pedantic -Wall -Wextra -Werror -Wfatal-errors --coverage
+CFLAGS+=-I.
+CFLAGS+=-g -ggdb
+LD=$(CC)
+LDFLAGS=-g -ggdb --coverage
 .SUFFIXES: .o.c
-OBJ=04_keyw.o 05_const.o test_cconst.o test_iconst.o test_keyw.o tests.o
+SCANO=ident.o table.o keyw.o const.o tok.o scan.o
+OBJ=$(SCANO) parse.o
+TESTO=$(SCANO) utests.o
 
-EXE=run_tests
+TESTS=run_utests
 
-all: $(EXE) $(OBJ) Makefile
+EXE=parse
 
-05_const.o: 05_const.c
-	$(CC) $(CFLAGS) -o 05_const.o -c 05_const.c
-test_cconst.o: test_cconst.c
-	$(CC) $(CFLAGS) -o test_cconst.o -c test_cconst.c
-test_iconst.o: test_iconst.c
-	$(CC) $(CFLAGS) -o test_iconst.o -c test_iconst.c
-tests.o: tests.c
-	$(CC) $(CFLAGS) -o tests.o -c tests.c
+.PHONY: all
+all: $(TESTS) $(EXE)
 
-$(EXE): $(OBJ) $(HDR) Makefile
+.PHONY: test
+test: $(TESTS)
+	@./run_utests
+
+.PHONY: cov
+cov: test
+	mkdir -p coverage
+	@rm -rf utests.gc*
+	@gcovr --txt
+	@gcovr --html-self-contained --html-details -o coverage/A02.html
+
+$(EXE): $(OBJ) Makefile
 	$(LD) $(LDFLAGS) -o $(EXE) $(OBJ)
+$(TESTS): $(TESTO) Makefile
+	$(LD) $(LDFLAGS) -o $(TESTS) $(TESTO)
 
+.PHONY: clean
 clean:
 	rm -f $(OBJ)
+	rm -f utests.o
 	rm -f $(EXE)
+	rm -f $(TESTS)
 	rm -f core
+	rm -f *.gc*
+	rm -rf coverage
