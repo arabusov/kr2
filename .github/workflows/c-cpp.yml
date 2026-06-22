@@ -1,4 +1,4 @@
-name: fcc CI
+name: A02 CI
 
 on:
   push:
