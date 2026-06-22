@@ -1,2 +1,4 @@
 run_utests
 parse
+*.gc*
+coverage

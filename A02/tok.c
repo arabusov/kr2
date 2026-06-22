@@ -3,7 +3,7 @@
 
 #define TT_FMT "token %10s:"
 
-extern void emit_token(struct tok *tok)
+extern void print_token(struct tok *tok)
 {
 	switch (tok->type) {
 	case IDENT_TOK:
@@ -61,7 +61,7 @@ extern void emit_token(struct tok *tok)
 		printf("\n");
 		break;
 	default:
-		fprintf(stderr, "emit_token: Internal error: %d\n", tok->type);
+		fprintf(stderr, "print_token: Internal error: %d\n", tok->type);
 		break;
 	}
 }

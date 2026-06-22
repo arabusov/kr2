@@ -101,7 +101,7 @@ void match_type()
 
 
 	error("Parse error: expected basic type, got this:");
-	emit_token(&lookahead);
+	print_token(&lookahead);
 }
 
 int expect_deref()
@@ -236,7 +236,7 @@ void match_sc()
 		}
 	}
 	error("Expected semicolon, got this:");
-	emit_token(&lookahead);
+	print_token(&lookahead);
 }
 
 extern void parse()

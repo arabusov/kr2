@@ -1,0 +1,29 @@
+name: fcc CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: make
+      run: make -C A02
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: make test
+      run: make -C A02 test
+    - name: coverage
+      uses: threeal/gcovr-action@v1.2.0
+      with:
+        coveralls-send: true

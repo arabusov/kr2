@@ -24,6 +24,6 @@ struct tok {
 	union tok_val val;
 };
 
-extern void emit_token(struct tok *);
+extern void print_token(struct tok *);
 
 #endif /* __TOK_H__ */

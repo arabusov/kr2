@@ -311,7 +311,7 @@ extern int test_keyw(void)
 
 #define TEST(f) (n_tests++, (f() == TRUE) ? 1 : 0)
 
-extern int fake_stdio(int (*test_foo)(void), const char *input)
+extern int fake_stdin(int (*test_foo)(void), const char *input)
 {
 	pid_t pid;
 	int fds[2];
@@ -370,9 +370,10 @@ int run_lexer()
 	int i = 0;
 	do {
 		scan(&tok);
+		print_token(&tok);
 		if (tok.type != etypes[i]) {
 			fprintf(stderr, "wrong tok at %d pos\n", i);
-			emit_token(&tok);
+			print_token(&tok);
 			return 0;
 		}
 		i++;
@@ -382,7 +383,7 @@ int run_lexer()
 
 int test_lexer()
 {
-	return fake_stdio(run_lexer, test_input);
+	return fake_stdin(run_lexer, test_input);
 }
 
 int main(void)
