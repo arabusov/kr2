@@ -388,6 +388,7 @@ static bool expect_sconst(struct cnst *cnst)
 extern void scan(struct tok *tok)
 {
 	tok->type = INVALID_TOK;
+start:
 	skip_wsp();
 	if (expect_pp())
 		return;
@@ -397,8 +398,7 @@ extern void scan(struct tok *tok)
 	}
 	if (is_comment_start()) {
 		ignore_comment();
-		return;
-		/* continue; */
+		goto start;		/* scan again to find next token */
 	} else if (expect_delim(&(tok->val.delim))) {
 		tok->type = DELIM_TOK;
 	} else if (expect_operator(&(tok->val.op))) {

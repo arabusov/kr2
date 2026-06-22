@@ -56,8 +56,12 @@ extern void emit_token(struct tok *tok)
 		break;
 	case EOF_TOK:
 		break;
+	case INVALID_TOK:
+		printf(TT_FMT, "INVAL");
+		printf("\n");
+		break;
 	default:
-		fprintf(stderr, "emit_token: Internal error");
+		fprintf(stderr, "emit_token: Internal error: %d\n", tok->type);
 		break;
 	}
 }

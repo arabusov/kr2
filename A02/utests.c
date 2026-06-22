@@ -333,29 +333,55 @@ extern int fake_stdio(int (*test_foo)(void), const char *input)
 	return res;
 }
 
+const char *test_input =
+/*  1 */ "int main(void)\n"
+/*  2 */ "{\n"
+/*  3 */ "\tint a = 1, b = 0, tmp; /* variables */\n"
+/*  4 */ "\twhile (b < 32000) { \n"
+/*  5 */ "\t\tprintf(\"%d\"\n, b);\n"
+/*  6 */ "\t\ttmp = a;\n"
+/*  7 */ "\t\ta = a + b;\n"
+/*  8 */ "\t\tb = tmp;\n"
+/*  9 */ "\t}\n"
+/* 10 */ "\treturn (0);\n"
+/* 11 */ "}\n";
+enum tok_type etypes[] = {
+	/*  1 */ KEYW_TOK, IDENT_TOK, DELIM_TOK, KEYW_TOK, DELIM_TOK,
+	/*  2 */ DELIM_TOK,
+	/*  3 */ KEYW_TOK, IDENT_TOK, OP_TOK, CONST_TOK, OP_TOK,
+	IDENT_TOK, OP_TOK, CONST_TOK, OP_TOK, IDENT_TOK, DELIM_TOK,
+	/*  4 */ KEYW_TOK, DELIM_TOK, IDENT_TOK, OP_TOK, CONST_TOK,
+	DELIM_TOK, DELIM_TOK,
+	/*  5 */ IDENT_TOK, DELIM_TOK, CONST_TOK, OP_TOK, IDENT_TOK,
+	DELIM_TOK, DELIM_TOK,
+	/*  6 */ IDENT_TOK, OP_TOK, IDENT_TOK, DELIM_TOK,
+	/*  7 */ IDENT_TOK, OP_TOK, IDENT_TOK, OP_TOK, IDENT_TOK,
+	DELIM_TOK,
+	/*  8 */ IDENT_TOK, OP_TOK, IDENT_TOK, DELIM_TOK,
+	/*  9 */ DELIM_TOK,
+	/* 10 */ KEYW_TOK, DELIM_TOK, CONST_TOK, DELIM_TOK, DELIM_TOK,
+	/* 11 */ DELIM_TOK,
+		EOF_TOK
+};
+
 int run_lexer()
 {
 	struct tok tok;
+	int i = 0;
 	do {
 		scan(&tok);
+		if (tok.type != etypes[i]) {
+			fprintf(stderr, "wrong tok at %d pos\n", i);
+			emit_token(&tok);
+			return 0;
+		}
+		i++;
 	} while ((EOF_TOK != tok.type) && (INVALID_TOK != tok.type));
 	return 1;
 }
 
 int test_lexer()
 {
-	const char *test_input =
-		"int main(void)\n"
-		"{\n"
-		"\tint a = 1, b = 0, tmp; /* variables */\n"
-		"\twhile (b < 32000) { \n"
-		"\t\tprintf(\"%d\n, b);\n"
-		"\t\ttmp = a;\n"
-		"\t\ta = a + b;\n"
-		"\t\tb = tmp;\n"
-		"\t}\n"
-		"\treturn (0);\n"
-		"}\n";
 	return fake_stdio(run_lexer, test_input);
 }
 
