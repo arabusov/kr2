@@ -145,13 +145,20 @@ int expect_lval_simple()
 	return 0;
 }
 
+static int is_rpar()
+{
+        return (DELIM_TOK == lookahead.type) && (RPAR_DELIM == lookahead.val.delim);
+}
+
 int expect_rval()
 {
         if ((DELIM_TOK == lookahead.type) && (LPAR_DELIM == lookahead.val.delim)) {
                 scan(&lookahead);
+		if (is_rpar())
+			error("Empty ()");
                 if (expect_rval())
                         scan(&lookahead);
-                if ((DELIM_TOK == lookahead.type) && (RPAR_DELIM == lookahead.val.delim))
+                if (is_rpar())
                         return 1;
                 error("Expected )");
         }
