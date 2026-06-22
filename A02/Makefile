@@ -4,8 +4,9 @@ CFLAGS+=-g -ggdb
 LD=$(CC)
 LDFLAGS=-g -ggdb
 .SUFFIXES: .o.c
-OBJ=ident.o table.o keyw.o const.o scan.o parse.o tok.o
-TESTO=keyw.o const.o utests.o
+SCANO=ident.o table.o keyw.o const.o tok.o scan.o
+OBJ=$(SCANO) parse.o
+TESTO=$(SCANO) utests.o
 
 TESTS=run_utests
 

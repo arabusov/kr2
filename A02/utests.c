@@ -2,10 +2,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "const.h"
 #include "keyw.h"
 #include "bool.h"
 #include "types.h"
+#include "tok.h"
+#include "scan.h"
 
 #define BUFLEN 24
 struct tup {
@@ -307,6 +311,54 @@ extern int test_keyw(void)
 
 #define TEST(f) (n_tests++, (f() == TRUE) ? 1 : 0)
 
+extern int fake_stdio(int (*test_foo)(void), const char *input)
+{
+	pid_t pid;
+	int fds[2];
+	int res = 0;
+
+	pipe(fds);
+	pid = fork();
+	if (0 == pid) {
+		dup2(fds[1], 1);
+		close(fds[0]);
+		puts(input);
+		close(fds[1]);
+		exit(0);
+	}
+	dup2(fds[0], 0);
+	close(fds[1]);
+	res = test_foo();
+	close(fds[0]);
+	return res;
+}
+
+int run_lexer()
+{
+	struct tok tok;
+	do {
+		scan(&tok);
+	} while ((EOF_TOK != tok.type) && (INVALID_TOK != tok.type));
+	return 1;
+}
+
+int test_lexer()
+{
+	const char *test_input =
+		"int main(void)\n"
+		"{\n"
+		"\tint a = 1, b = 0, tmp; /* variables */\n"
+		"\twhile (b < 32000) { \n"
+		"\t\tprintf(\"%d\n, b);\n"
+		"\t\ttmp = a;\n"
+		"\t\ta = a + b;\n"
+		"\t\tb = tmp;\n"
+		"\t}\n"
+		"\treturn (0);\n"
+		"}\n";
+	return fake_stdio(run_lexer, test_input);
+}
+
 int main(void)
 {
 	int n_tests = 0;
@@ -314,6 +366,7 @@ int main(void)
 	n_succ += TEST(test_iconst);
 	n_succ += TEST(test_chrconst);
 	n_succ += TEST(test_keyw);
+	n_succ += TEST(test_lexer);
 	printf("Total test stat: [%d/%d]\n", n_succ, n_tests);
 	return 0;
 }
