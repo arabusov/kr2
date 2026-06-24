@@ -100,8 +100,6 @@ int expect_type()
         }
 
 	return 0;
-
-
 }
 
 int expect_deref()
@@ -110,6 +108,18 @@ int expect_deref()
 		if (AST_OP == lookahead.val.op)
 			return 1;
 	return 0;
+}
+
+int expect_type_or_ptr()
+{
+	int tmp = expect_type();
+	if (tmp) {
+		if (expect_deref()) {
+			scan(&lookahead);
+			return 1;
+		}
+	}
+	return tmp;
 }
 
 int expect_comma()
@@ -137,8 +147,6 @@ int expect_ident()
 
 int expect_lval_simple()
 {
-	if (expect_deref())
-		scan(&lookahead);
 	if (expect_ident())
 		return 1;
 	error("Parse error: expected identifier");
@@ -156,9 +164,16 @@ int expect_rval()
                 scan(&lookahead);
 		if (is_rpar())
 			error("Empty ()");
-                if (expect_rval())
+		if (expect_type_or_ptr()) {
+			if (is_rpar()) {
+				scan(&lookahead);
+				return expect_rval();
+			}
+			error("Expected )");
+		}
+		if (expect_rval())
                         scan(&lookahead);
-                if (is_rpar())
+		if (is_rpar())
                         return 1;
                 error("Expected )");
         }
@@ -243,7 +258,7 @@ extern void parse()
 {
 	scan(&lookahead);	/* initialize lookahead */
 	do {
-		if (expect_type()) {
+		if (expect_type_or_ptr()) {
 			match_list();
 			match_sc();
 		} else {
