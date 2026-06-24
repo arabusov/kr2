@@ -34,74 +34,74 @@ int expect_int(struct tok *tok)
         return (INT == tok->val.keyw);
 }
 
-int expect_unsigned(struct tok *tok)
+int expect_signess(struct tok *tok)
 {
 	if (KEYW_TOK != tok->type)
 		return 0;
-        return (UNSIGNED == tok->val.keyw);
+        return (UNSIGNED == tok->val.keyw) || (SIGNED == tok->val.keyw);
 }
 
-int expect_long(struct tok *tok)
+int expect_long_or_short(struct tok *tok)
 {
 	if (KEYW_TOK != tok->type)
 		return 0;
-        return (LONG == tok->val.keyw);
+        return (LONG == tok->val.keyw) || (SHORT == tok->val.keyw);
 }
 
 struct tok lookahead;
 
-void match_type()
+int expect_type()
 {
         if (expect_modifier(&lookahead))
                 scan(&lookahead);
 	if (expect_char(&lookahead)) {
 		scan(&lookahead);
-		return;
+		return 1;
 	}
-        if (expect_long(&lookahead)) {
+        if (expect_long_or_short(&lookahead)) {
                 scan(&lookahead);
-                if (expect_unsigned(&lookahead)) {
+                if (expect_signess(&lookahead)) {
                         scan(&lookahead);
                         if (expect_int(&lookahead)) {
                                 scan(&lookahead);
-                                return;
+                                return 1;
                         }
-                        return;
+                        return 1;
                 }
                 if (expect_int(&lookahead)) {
                         scan(&lookahead);
-                        return;
+                        return 1;
                 }
-                return;
+                return 1;
         }
-        if (expect_unsigned(&lookahead)) {
+        if (expect_signess(&lookahead)) {
                 scan(&lookahead);
-                if (expect_long(&lookahead)) {
+                if (expect_long_or_short(&lookahead)) {
                         scan(&lookahead);
                         if (expect_int(&lookahead)) {
                                 scan(&lookahead);
-                                return;
+				return 1;
                         }
-                        return;
+			return 1;
                 }
                 if (expect_int(&lookahead)) {
                         scan(&lookahead);
-                        return;
+			return 1;
                 }
                 if (expect_char(&lookahead)) {
                         scan(&lookahead);
-                        return;
+			return 1;
                 }
-                return;
+		return 1;
         }
-        if (expect_int(&lookahead) || expect_long(&lookahead) || expect_unsigned(&lookahead)) {
+        if (expect_int(&lookahead) || expect_long_or_short(&lookahead) || expect_signess(&lookahead)) {
                 scan(&lookahead);
-                return;
+		return 1;
         }
 
+	return 0;
 
-	error("Parse error: expected basic type, got this:");
-	print_token(&lookahead);
+
 }
 
 int expect_deref()
@@ -243,7 +243,13 @@ extern void parse()
 {
 	scan(&lookahead);	/* initialize lookahead */
 	do {
-		match_type(); match_list(); match_sc();
+		if (expect_type()) {
+			match_list();
+			match_sc();
+		} else {
+			error("Parse error: expected basic type, got this:");
+			print_token(&lookahead);
+		}
 	} while ((EOF_TOK != lookahead.type)
 			&& (INVALID_TOK != lookahead.type));
 }
