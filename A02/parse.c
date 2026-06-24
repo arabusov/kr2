@@ -145,14 +145,42 @@ int expect_ident()
 	return 0;
 }
 
+static int is_rsqbr()
+{
+        return (DELIM_TOK == lookahead.type) && (RSQBR_DELIM == lookahead.val.delim);
+}
+
+int expect_array_def()
+{
+        if ((DELIM_TOK == lookahead.type) && (LSQBR_DELIM == lookahead.val.delim)) {
+                scan(&lookahead);
+                if (is_rsqbr())
+                        return 1;
+                if ((CONST_TOK == lookahead.type) && (I_CONST == lookahead.val.cnst.type.type)) {
+                        scan(&lookahead);
+                        if (is_rsqbr())
+                                return 1;
+                        error("Expected ]");
+                }
+                error("Expected I_CONST or ]");
+        }
+        return 0;
+}
+
+
 int expect_lval_simple()
 {
 	while (expect_deref()) {
 		scan(&lookahead);
 	}
-	if (expect_ident())
+	if (expect_ident()) {
+		scan(&lookahead);
+                while (expect_array_def())
+                        scan(&lookahead);
 		return 1;
+        }
 	return 0;
+
 }
 
 static int is_rpar()
@@ -181,13 +209,10 @@ int expect_rval()
         }
 	if (expect_lval_simple())
 		return 1;
-        if (OP_TOK == lookahead.type) {
-                if (AND_OP == lookahead.val.op) {
-                        scan(&lookahead);
-                        if (expect_rval())
-                                return 1;
-                        return 0;
-                }
+        if ((OP_TOK == lookahead.type) && (AND_OP == lookahead.val.op)) {
+                scan(&lookahead);
+                if (expect_rval())
+                        return 1;
                 return 0;
         }
 	if (CONST_TOK == lookahead.type)
@@ -195,34 +220,9 @@ int expect_rval()
 	return 0;
 }
 
-static int is_rsqbr()
-{
-        return (DELIM_TOK == lookahead.type) && (RSQBR_DELIM == lookahead.val.delim);
-}
-
-int expect_array_def()
-{
-        if ((DELIM_TOK == lookahead.type) && (LSQBR_DELIM == lookahead.val.delim)) {
-                scan(&lookahead);
-                if (is_rsqbr())
-                        return 1;
-                if ((CONST_TOK == lookahead.type) && (I_CONST == lookahead.val.cnst.type.type)) {
-                        scan(&lookahead);
-                        if (is_rsqbr())
-                                return 1;
-                        error("Expected ]");
-                }
-                error("Expected I_CONST or ]");
-        }
-        return 0;
-}
-
 int expect_assignment()
 {
 	if (expect_lval_simple()) {
-		scan(&lookahead);
-                while (expect_array_def())
-                        scan(&lookahead);
 		if (expect_assign_op()) {
 			scan(&lookahead);
                         if (expect_rval()) {
@@ -231,6 +231,7 @@ int expect_assignment()
 			}
 			error("Parse error: expected rval after assign_op");
 		}
+                scan(&lookahead);
 		return 1;
 	}
 	return 0;
@@ -238,13 +239,13 @@ int expect_assignment()
 
 void match_list()
 {
-	if (expect_assignment()) {
-		return;
-	}
-	if (expect_comma()) {
-		match_list();
-		return;
-	}
+        if (expect_assignment()) {
+                if (expect_comma()) {
+                        scan(&lookahead);
+                        match_list();
+                }
+                return;
+        }
 	error("Parse error: expected list of assignments");
 }
 
