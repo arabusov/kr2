@@ -114,10 +114,10 @@ int expect_type_or_ptr()
 {
 	int tmp = expect_type();
 	if (tmp) {
-		if (expect_deref()) {
+		while (expect_deref()) {
 			scan(&lookahead);
-			return 1;
 		}
+		return 1;
 	}
 	return tmp;
 }
@@ -147,9 +147,11 @@ int expect_ident()
 
 int expect_lval_simple()
 {
+	while (expect_deref()) {
+		scan(&lookahead);
+	}
 	if (expect_ident())
 		return 1;
-	error("Parse error: expected identifier");
 	return 0;
 }
 
@@ -177,6 +179,8 @@ int expect_rval()
                         return 1;
                 error("Expected )");
         }
+	if (expect_lval_simple())
+		return 1;
         if (OP_TOK == lookahead.type) {
                 if (AND_OP == lookahead.val.op) {
                         scan(&lookahead);
@@ -186,7 +190,9 @@ int expect_rval()
                 }
                 return 0;
         }
-	return (IDENT_TOK == lookahead.type) || (CONST_TOK == lookahead.type);
+	if (CONST_TOK == lookahead.type)
+		return 1;
+	return 0;
 }
 
 static int is_rsqbr()
@@ -258,7 +264,7 @@ extern void parse()
 {
 	scan(&lookahead);	/* initialize lookahead */
 	do {
-		if (expect_type_or_ptr()) {
+		if (expect_type()) {
 			match_list();
 			match_sc();
 		} else {
