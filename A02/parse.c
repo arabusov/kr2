@@ -5,15 +5,17 @@
 #define STATIC_MASK (1<<2)
 #define REGISTER_MASK (1<<2)
 
-int expect_modifier(struct tok *tok)
+/* K&R78, A18.2, p. 215 */
+int is_sc_specifier(struct tok *tok)
 {
 	if (KEYW_TOK != tok->type)
 		return 0;
         switch (tok->val.keyw) {
                 case AUTO:
-                case EXTERN:
                 case STATIC:
+                case EXTERN:
                 case REGISTER:
+		case TYPEDEF:
                         return 1;
                 default: return 0;
         }
@@ -50,52 +52,57 @@ int expect_long_or_short(struct tok *tok)
 
 struct tok lookahead;
 
+static void next()
+{
+	next(), 
+}
+
 int expect_type()
 {
-        if (expect_modifier(&lookahead))
-                scan(&lookahead);
+        if (is_sc_specifier(&lookahead))
+                next();
 	if (expect_char(&lookahead)) {
-		scan(&lookahead);
+		next();
 		return 1;
 	}
         if (expect_long_or_short(&lookahead)) {
-                scan(&lookahead);
+                next();
                 if (expect_signess(&lookahead)) {
-                        scan(&lookahead);
+                        next();
                         if (expect_int(&lookahead)) {
-                                scan(&lookahead);
+                                next();
                                 return 1;
                         }
                         return 1;
                 }
                 if (expect_int(&lookahead)) {
-                        scan(&lookahead);
+                        next();
                         return 1;
                 }
                 return 1;
         }
         if (expect_signess(&lookahead)) {
-                scan(&lookahead);
+                next();
                 if (expect_long_or_short(&lookahead)) {
-                        scan(&lookahead);
+                        next();
                         if (expect_int(&lookahead)) {
-                                scan(&lookahead);
+                                next();
 				return 1;
                         }
 			return 1;
                 }
                 if (expect_int(&lookahead)) {
-                        scan(&lookahead);
+                        next();
 			return 1;
                 }
                 if (expect_char(&lookahead)) {
-                        scan(&lookahead);
+                        next();
 			return 1;
                 }
 		return 1;
         }
         if (expect_int(&lookahead) || expect_long_or_short(&lookahead) || expect_signess(&lookahead)) {
-                scan(&lookahead);
+                next();
 		return 1;
         }
 
@@ -115,14 +122,14 @@ int expect_type_or_ptr()
 	int tmp = expect_type();
 	if (tmp) {
 		while (expect_deref()) {
-			scan(&lookahead);
+			next();
 		}
 		return 1;
 	}
 	return tmp;
 }
 
-int expect_comma()
+int is_comma()
 {
 	if (OP_TOK == lookahead.type)
 		if (COMMA_OP == lookahead.val.op)
@@ -153,11 +160,11 @@ static int is_rsqbr()
 int expect_array_def()
 {
         if ((DELIM_TOK == lookahead.type) && (LSQBR_DELIM == lookahead.val.delim)) {
-                scan(&lookahead);
+                next();
                 if (is_rsqbr())
                         return 1;
                 if ((CONST_TOK == lookahead.type) && (I_CONST == lookahead.val.cnst.type.type)) {
-                        scan(&lookahead);
+                        next();
                         if (is_rsqbr())
                                 return 1;
                         error("Expected ]");
@@ -171,12 +178,12 @@ int expect_array_def()
 int expect_lval_simple()
 {
 	while (expect_deref()) {
-		scan(&lookahead);
+		next();
 	}
 	if (expect_ident()) {
-		scan(&lookahead);
+		next();
                 while (expect_array_def())
-                        scan(&lookahead);
+                        next();
 		return 1;
         }
 	return 0;
@@ -191,18 +198,18 @@ static int is_rpar()
 int expect_rval()
 {
         if ((DELIM_TOK == lookahead.type) && (LPAR_DELIM == lookahead.val.delim)) {
-                scan(&lookahead);
+                next();
 		if (is_rpar())
 			error("Empty ()");
 		if (expect_type_or_ptr()) {
 			if (is_rpar()) {
-				scan(&lookahead);
+				next();
 				return expect_rval();
 			}
 			error("Expected )");
 		}
 		if (expect_rval())
-                        scan(&lookahead);
+                        next();
 		if (is_rpar())
                         return 1;
                 error("Expected )");
@@ -210,7 +217,7 @@ int expect_rval()
 	if (expect_lval_simple())
 		return 1;
         if ((OP_TOK == lookahead.type) && (AND_OP == lookahead.val.op)) {
-                scan(&lookahead);
+                next();
                 if (expect_rval())
                         return 1;
                 return 0;
@@ -224,14 +231,14 @@ int expect_assignment()
 {
 	if (expect_lval_simple()) {
 		if (expect_assign_op()) {
-			scan(&lookahead);
+			next();
                         if (expect_rval()) {
-                                scan(&lookahead);
+                                next();
 				return 1;
 			}
 			error("Parse error: expected rval after assign_op");
 		}
-                scan(&lookahead);
+                next();
 		return 1;
 	}
 	return 0;
@@ -240,8 +247,8 @@ int expect_assignment()
 void match_list()
 {
         if (expect_assignment()) {
-                if (expect_comma()) {
-                        scan(&lookahead);
+                if (is_comma()) {
+                        next();
                         match_list();
                 }
                 return;
@@ -253,7 +260,7 @@ void match_sc()
 {
 	if (DELIM_TOK == lookahead.type) {
 		if (SEMICOLON_DELIM == lookahead.val.delim) {
-			scan(&lookahead);
+			next();
 			return;
 		}
 	}
@@ -261,15 +268,341 @@ void match_sc()
 	print_token(&lookahead);
 }
 
+/* follow A18 K&R78: */
+
+static void constant_expression(int opt)
+{
+	if (opt == 0) {
+		error("Non-optional constant is not implemented");
+	}
+	if ((CONST_TOK == lookahead.type)
+			&& (I_CONST == lookahead.val.cnst.type.type)) {
+		next();
+		return;
+	}
+}
+
+/* K&R78, A18.2, p. 217 */
+static void declarator();
+{
+	switch (lookahead.type) {
+		case IDENT_TOK:
+			next();
+			return;
+		case DELIM_TOK:
+			if (LPAR_DELIM == lookahead.val.delim) {
+				declarator();
+				if (is_rpar()) {
+					next();
+					return;
+				}
+				error("Expected )");
+			}
+			error("Expected (");
+			break; /* unreachabel */
+		case OP_TOK:
+			if (AST_OP == lookahead.val.op) {
+				declarator();
+				return;
+			}
+			error("Expected *");
+		default:
+			declarator();
+			if (DELIM_TOK == lookahead.type) {
+				if (LPAR_TOK == lookahead.val.delim) {
+					next();
+					if (is_rpar()) {
+						next();
+						return;
+					}
+					error("Expected )");
+				}
+				if (LBRK_TOK == lookahead.val.delim) {
+					next();
+					constant_expression(1);
+					if (is_rbrk()) {
+						next();
+						return;
+					}
+					error("Expected ]");
+				}
+	}
+}
+
+/* K&R78, A18.1, p. 215 */
+static int is_asgnop()
+{
+	if (OP_TYPE != lookahead.type)
+		return 0;
+	switch (lookahead.type.val) {
+		case ASSIGN_OP:
+		case ASSIGNPL_OP:
+		case ASSIGNMN_OP:
+		case ASSIGNML_OP:
+		case ASSIGNDV_OP:
+		case ASSIGNRM_OP:
+		case ASSIGNAN_OP:
+		case ASSIGNOR_OP:
+		case ASSIGNXR_OP:
+		case ASSIGNRS_OP:
+		case ASSIGNLS_OP:
+			return 1;
+		default:
+			return 0;
+	}
+	return 0;
+}
+
+static void asgnop()
+{
+	if (is_asgnop()) {
+		next();
+		return;
+	}
+	error("Expected assign operator");
+}
+
+static void rpar()
+{
+	if (is_rpar()) {
+		next();
+		return;
+	}
+	error("expected )");
+}
+
+/* K&R78, A18.1, p. 214 */
+static int primary()
+{
+	if (IDENT_TYPE == lookahead.type) {
+		next();
+		return 1;
+	}
+	if (CONST_TYPE == lookahead.type) {
+		next();
+		return 1;
+	}
+	if (DELIM_TYPE == lookahead.type && LPAR == lookahead.val.delim) {
+		next();
+		expression();
+		rpar();
+		return 1;
+	}
+	if (primary()) {
+		next();
+		if (DELIM_TYPE == lookahead.type && LPAR == lookahead.val.delim) {
+	}
+
+}
+/* K&R78, A18.1, p. 214 */
+static void lvalue()
+{
+	if (IDENT_TYPE == lookahead.type) {
+		next();
+		return;
+	}
+	if (OP_TYPE == lookahead.type && AST_OP == lookahead.val.op) {
+		next();
+		expresion();
+		return;
+	}
+	if (DELIM_TYPE == lookahead.type && LPAR == lookahead.val.delim) {
+		next();
+		lvalue();
+		rpar();
+		return;
+	}
+	if (primary()) {
+		if (DELIM_TYPE == lookahead.type
+				&& LBRK_DELIM == lookahead.val.delim) {
+			next();
+			expression();
+			if (is_rbrk()) {
+				next();
+				return;
+			}
+			error("expected ]");
+		}
+		if (OP_TYPE == lookahead.type && ARROW_OP == lookahead.val.op) {
+			next();
+			if (IDENT_TYPE == lookahead.type) {
+				next();
+				return;
+			}
+			error("expected identifier (2)");
+		}
+		error("expected -> or [");
+	}
+	lvalue();
+	if (OP_TYPE == lookahead.type && DOT_OP == lookahead.val.op) {
+		next();
+		if (IDENT_TYPE == lookahead.type) {
+			next();
+			return;
+		}
+		error("expected identifier");
+	}
+	error("expected lvalue");
+
+}
+
+/* K&R78, A18.1, p. 214 */
+static int expression()
+{
+	if (KEYW_TYPE == lookahead.type && SIZEOF == lookahead.val.keyw) {
+		next();
+		if (expresion())
+			return 1;
+		error("expected expression (0)");
+	}
+	if (OP_TYPE == lookahead.type) {
+		switch (lookahead.val.op) {
+			case AST_OP:
+			case AND_OP:
+			case MINUS_OP:
+			case NOT_OP:
+			case NEG_OP:
+				next();
+				if (expression())
+					return 1;
+				error("expected expression (1)");
+			case INC_OP:
+			case DEC_OP:
+				next();
+				lvalue();
+				return 1;
+			default:
+				error("expression not implemented");
+		}
+	}
+	if (primary()) return 1;
+	lvalue();
+	if (OP_TYPE == lookahead.type) {
+		switch (lookahead.val.op) {
+			case INC_OP:
+			case DEC_OP:
+				next();
+				return 1;
+			default:
+				error("Not implemented expression");
+		}
+	}
+	error("expected ++ or --");
+	return 0;
+}
+/* K&R78, A18.2, p. 217 */
+static void initializer_list()
+{
+	error("Not implemented");
+}
+
+/* K&R78, A18.2, p. 217 */
+static void initializer_opt()
+{
+	if (OP_TYPE != lookahead.type)
+		return;
+	if (ASSIGN_OP != lookahead.type.op)
+		return;
+	next();
+	if (DELIM_TYPE == lookahead.type && LBRACE_DELIM == lookahead.val.delim) {
+		next(); initializer_list();
+		if (is_comma()) next();
+		if (DELIM_TYPE == lookahead.type && LBRACE_DELIM == lookahead.val.delim) {
+			next();
+			return;
+		}
+		error("Unmatched {");
+	}
+	expression();
+}
+
+/* K&R78, A18.2, p. 217 */
+static void init_declarator()
+{
+	declarator();
+	initializer_opt();
+}
+/* K&R78, A18.2, p. 217 */
+static void init_declarator_list(int opt)
+{
+	init_declarator();
+	if (is_comma()) {
+		next();
+		init_declarator_list();
+	}
+	if (!opt) {
+		error("Expected declaration specifiers, got this:");
+		print_token(&lookahead);
+	}
+}
+
+/* K&R78, A18.2, p. 217 */
+static void typedef_name()
+{
+	error("typedef not yet implemented");
+}
+
+/* K&R78, A18.2, p. 216 */
+static int is_type_specifier()
+{
+	if (KEYW_TOK == tok->type) {
+		switch (tok->val.keyw) {
+			case CHAR:
+			case SHORT:
+			case INT:
+			case LONG:
+			case UNSIGNED:
+			case FLOAT:
+			case DOUBLE:
+				return 1;
+			case STRUCT:
+			case UNION:
+				struct_or_union_specifier();
+				return 1;
+			default:
+				return 0;
+		}
+		error("Internal error in is_type_specifier()");
+	} else if (IDENT_TOK == tok->type) {
+		typedef_name();
+	}
+        return 0;
+
+}
+
+/* K&R78, A18.2, p. 215 */
+static void decl_specifiers(int opt)
+{
+	if (is_type_specifier()) {
+		decl_specifiers(1);
+		return;
+	}
+	if (is_sc_specifier()) {
+		decl_specifiers(1);
+		return;
+	}
+	if (!opt) {
+		error("Expected declaration specifiers, got this:");
+		print_token(&lookahead);
+	}
+}
+
+/* K&R78, A18.2, p. 215 */
+static void declaration()
+{
+	decl_specifiers(0);
+	init_declaration_list();
+}
+
 extern void parse()
 {
-	scan(&lookahead);	/* initialize lookahead */
+	next();	/* initialize lookahead */
 	do {
 		if (expect_type()) {
 			match_list();
 			match_sc();
 		} else {
-			error("Parse error: expected basic type, got this:");
+			error("Parse error: expected type declaration, got this:");
 			print_token(&lookahead);
 		}
 	} while ((EOF_TOK != lookahead.type)
