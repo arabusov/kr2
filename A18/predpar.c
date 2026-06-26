@@ -87,12 +87,9 @@ int S()
 				return 1;
 			}
 			pop();
-			return 0;
 		}
 		pop();
-		return 0;
 	}
-	pop();
 	return 0;
 }
 
