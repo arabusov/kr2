@@ -1,10 +1,13 @@
 CFLAGS=-g -ggdb
 LDFLAGS=-g -ggdb
+LD=$(CC)
 
-all: predpar
+all: predpar lval
 
 predpar: predpar.c
-	$(CC) -o predpar predpar.c
+	$(LD) $(LDFLAGS) -o predpar predpar.c
+lval: lval.c
+	$(LD) $(LDFLAGS) -o lval lval.c
 
 doc: notes.ps.Z
 
@@ -15,4 +18,4 @@ notes.ps: notes.ms
 	groff -ms notes.ms > notes.ps
 clean:
 	rm -f notes.ps notes.ps.Z
-	rm -f predpar
+	rm -f predpar lval

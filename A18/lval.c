@@ -69,6 +69,19 @@ int buffer[BLEN];
 int sp = -1;
 int bp = -1;
 
+void print_buffer()
+{
+        int i;
+        printf("bp = %d, sp = %d\n", bp, sp);
+        for (i = 0; i < sp + 1; i ++) {
+                if (sp != i)
+                        printf("    ");
+                else
+                        printf("--->");
+                printf("%d(%c)\n", buffer[i], (char)buffer[i]);
+        }
+}
+
 int lookahead = EOF;
 
 void next()
@@ -92,6 +105,12 @@ void pop()
 	lookahead = buffer[sp];
 }
 
+void rw_stack(int old_sp)
+{
+        sp = old_sp;
+        lookahead = buffer[sp];
+}
+
 /* EL -> e | e , EL */
 int EL()
 {
@@ -100,7 +119,7 @@ int EL()
 		if (',' == lookahead) {
 			if (EL())
 				return 1;
-			/* if EL fails, the stack muts be restored autom */
+			/* if EL fails, the stack must be restored autom */
 		}
 		pop();
 	}
@@ -159,7 +178,7 @@ int RP()
 			if (RP())
 				return 1;
 		}
-		sp = old_sp; /* despite succ EL, need to rewind back if RP fails*/
+		rw_stack(old_sp); /* despite succ EL, need to rw_stack back if RP fails*/
 	}
 	/* | [ e ] RP */
 	if ('[' == lookahead) {
@@ -192,7 +211,7 @@ int RP()
 }
 
 /* P	: P1 RP | L . i */
-int L(); /* forward declaration */
+int RL(); /* forward declaration */
 int P()
 {
 	int old_sp;
@@ -201,8 +220,8 @@ int P()
 		if (RP())
 			return 1;
 	}
-	sp = old_sp;
-	if (L()) {
+	rw_stack(old_sp);
+        if (RL()) {
 		if ('.' == lookahead) {
 			next();
 			if ('i' == lookahead) {
@@ -212,7 +231,7 @@ int P()
 			pop();
 		}
 	}
-	sp = old_sp;
+	rw_stack(old_sp);
 	return 0;
 }
 
@@ -248,33 +267,35 @@ int L()
 		if (RL())
 			return 1;
 		pop();
-	}
+        }
+        /* L -> P [ e ] */
 	old_sp = sp;
-	if (P()) {
-		/* L -> P [ e ] */
-		if ('[' == lookahead) {
-			next();
-			if ('e' == lookahead) {
-				next();
-				if (']' == lookahead) {
-					next();
-					return 1;
-				}
-				pop();
-			}
-			pop();
-		}
-		/* L -> P - i */
-		if ('-' == lookahead) {
-			next();
-			if ('i' == lookahead) {
-				next();
-				return 1;
-			}
-			pop();
-		}
-	}
-	sp = old_sp; /* if P() but rest failed */
+        if (RP()) {
+                if (P1()) {
+                        if ('[' == lookahead) {
+                                next();
+                                if ('e' == lookahead) {
+                                        next();
+                                        if (']' == lookahead) {
+                                                next();
+                                                return 1;
+                                        }
+                                        pop();
+                                }
+                                pop();
+                        }
+                        /* L -> P - i */
+                        if ('-' == lookahead) {
+                                next();
+                                if ('i' == lookahead) {
+                                        next();
+                                        return 1;
+                                }
+                                pop();
+                        }
+                }
+        }
+	rw_stack(old_sp); /* if P() but rest failed */
 	/* * e */
 	if ('*' == lookahead) {
 		next();
@@ -294,7 +315,7 @@ int L()
 				return 1;
 			}
 		}
-		sp = old_sp; /* unnecessary if last production */
+		rw_stack(old_sp); /* unnecessary if last production */
 	}
 	return 0;
 }
@@ -305,6 +326,7 @@ void match(int tok)
 		next();
 		return;
 	}
+        print_buffer();
 	error("could not match token");
 }
 
@@ -313,7 +335,7 @@ void parse()
 	next(); /* initialize lookahead and buffer */
 
 	while (EOF != lookahead) {
-		if (S()) {
+		if (L()) {
 			match('\n');
 			printf("Matched\n");
 			continue;
