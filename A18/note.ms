@@ -91,9 +91,9 @@ It seems there is a couple of typos on the p. 177. The line 8 should read
 should read \*[Q]the production \fIA\di\u\[->]\[*d]\d1\u\[*g]  |
 \[*d]\d2\u\[*g]  | ...  | \[*d]\dk\u\[*g].\*[U]
 .FE
-First, we order the non-terminals with being \fIL\fR the first and \fIP\fR the
-second. The \fIL\fR production need to undergo the elimination of the immediate
-left recursion:
+First, we order the non-terminals with \fIL\fR being the first and \fIP\fR
+being the second. The \fIL\fR production need to undergo the elimination of
+the immediate left recursion:
 .DS
 \fIL	\[->]	i RL | \fC*\fIe RL
 	|	P \fC[\fIe \fC] \fIRL
@@ -108,11 +108,10 @@ the only production of \fIP\fR containing \fIL\fR by expanding \fIL\fR:
 \fIP	\[->]	i  | c | s | \fC(\fIe \fC)\fI
 	|	P \fC(\fIEL\dopt\u \fC)\fI
 	|	P \fC[\fIe \fC]\fI
-	|	i \fC\. \fIi | \fC*\fIe \fC\. \fIi
-	|	P \fC[\fIe \fC]\fI \fC\. \fIi
-	|	L \fC\. \fIi \fC\. \fIi
-	|	P \fC-> \fIi \fC. \fIi
-	|	\fC(\fIL \fC)\fI \fC. \fIi\fR
+	|	i RL \fC\.\fI i | \fC*\fI e RL \fC\. \fIi
+	|	P \fC[\fIe \fC]\fI RL \fC\. \fIi
+	|	P \fC-> \fIi RL \fC. \fIi
+	|	\fC(\fIL \fC)\fI RL \fC. \fIi
 	|	P \fC-> \fIi
 
 .DE
@@ -122,23 +121,25 @@ and their productions. We use the \fIRP\fR symbol for the \*[Q]rest\*[U] of the
 \fIP\fR and \fIRL\fR for the \*[Q]rest\*[U] of \fIL\fR. Additionally, we add an
 extra non-terminal \fIPt\fR just to shorten the notation as its productions are
 terminals only.
-.2C
 .DS
-\fIPt \[->]	i | c | s | \fC(\fIe \fC)\fI
-\fIPR \[->]	\fC(\fIEL\dopt\u \fC)\fI
-\fI	| \fC[\fIe \fC]\fI
-\fI	| P \fC->\fIi
-\fI	| L \fC.\fIi
+\fIRP	\[->]	P \fC(\fIEL\dopt\u \fC)\fI
+	|	\fC[\fIe \fC]\fI RP
+	|	\fC[\fIe \fC]\fI RL \fC\. \fIi RP
+	|	\fC-> \fIi RL \fC. \fIi RP
+	|	\fC-> \fIi RP
+	|	\[*e]
 .DE
 .DS
-\fIP \[->]	i | c | s | \fC(\fIe \fC)\fI
-\fI	| P \fC(\fIEL\dopt\u \fC)\fI
-\fI	| P \fC[\fIe \fC]\fI
-\fI	| L \fC.\fIi
-\fI	| P \fC->\fIi
-.DE
-.1C
+\fIP	\[->]	i  RP | c RP | s RP | \fC(\fIe \fC)\fI RP
+	|	P \fC(\fIEL\dopt\u \fC)\fI RP
+	|	P \fC[\fIe \fC]\fI RP
+	|	i RL \fC\.\fI i RP | \fC*\fI e RL \fC\. \fIi RP
+	|	P \fC[\fIe \fC]\fI RL \fC\. \fIi RP
+	|	P \fC-> \fIi RL \fC. \fIi RP
+	|	\fC(\fIL \fC)\fI RL \fC. \fIi RP
+	|	P \fC-> \fIi RP
 
+.DE
 
 .NH
 Literature
