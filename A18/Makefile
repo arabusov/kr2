@@ -23,7 +23,7 @@ $(PSNOTE): $(MSNOTE)
 	groff -ms $(MSNOTE) > $(PSNOTE)
 
 preview: $(CNOTE)
-	nohup gv $(CNOTE) &
+	nohup gv -scale=1.414 $(CNOTE) &
 	rm -f nohup.out
 
 clean:

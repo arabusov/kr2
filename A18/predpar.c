@@ -1,5 +1,5 @@
 /*
- * ASU, Example 4.14
+ * ASU, Example 4.14: predictive parser
  * Grammar:
  * S -> cAd
  * A -> ab | a

@@ -216,6 +216,7 @@ int P()
 {
 	int old_sp;
 	old_sp = sp;
+	printf("P: sp=%d\n", sp);
 	if (P1()) {
 		if (RP())
 			return 1;
@@ -262,6 +263,7 @@ int RL()
 int L()
 {
 	int old_sp;
+	printf("L: sp=%d\n", sp);
 	if ('i' == lookahead) {
 		next();
 		if (RL())
@@ -270,31 +272,29 @@ int L()
         }
         /* L -> P [ e ] */
 	old_sp = sp;
-        if (RP()) {
-                if (P1()) {
-                        if ('[' == lookahead) {
-                                next();
-                                if ('e' == lookahead) {
-                                        next();
-                                        if (']' == lookahead) {
-                                                next();
-                                                return 1;
-                                        }
-                                        pop();
-                                }
-                                pop();
-                        }
-                        /* L -> P - i */
-                        if ('-' == lookahead) {
-                                next();
-                                if ('i' == lookahead) {
-                                        next();
-                                        return 1;
-                                }
-                                pop();
-                        }
-                }
-        }
+	if (P()) {
+		if ('[' == lookahead) {
+			next();
+			if ('e' == lookahead) {
+				next();
+				if (']' == lookahead) {
+					next();
+					return 1;
+				}
+				pop();
+			}
+			pop();
+		}
+		/* L -> P - i */
+		if ('-' == lookahead) {
+			next();
+			if ('i' == lookahead) {
+				next();
+				return 1;
+			}
+			pop();
+		}
+	}
 	rw_stack(old_sp); /* if P() but rest failed */
 	/* * e */
 	if ('*' == lookahead) {
