@@ -1,3 +1,7 @@
+NOTE=note
+MSNOTE=$(NOTE).ms
+PSNOTE=$(NOTE).ps
+CNOTE=$(PSNOTE).Z
 CFLAGS=-g -ggdb
 LDFLAGS=-g -ggdb
 LD=$(CC)
@@ -9,13 +13,20 @@ predpar: predpar.c
 lval: lval.c
 	$(LD) $(LDFLAGS) -o lval lval.c
 
-doc: notes.ps.Z
+doc: $(CNOTE)
 
-notes.ps.Z: notes.ps
+$(CNOTE): $(PSNOTE)
 	rm -f $@
-	compress notes.ps
-notes.ps: notes.ms
-	groff -ms notes.ms > notes.ps
+	compress $(PSNOTE)
+
+$(PSNOTE): $(MSNOTE)
+	groff -ms $(MSNOTE) > $(PSNOTE)
+
+preview: $(CNOTE)
+	nohup gv $(CNOTE) &
+	rm -f nohup.out
+
 clean:
-	rm -f notes.ps notes.ps.Z
+	rm -f $(PSNOTE) $(CNOTE)
 	rm -f predpar lval
+	rm -f nohup.out
