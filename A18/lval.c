@@ -4,12 +4,14 @@
  * EL	: e
  *	| e , EL
  *	;
+ * ELo	: EL
+ *	| ""
+ *	;
  * P	: i
  *	| c
  *	| s
  *	| ( e )
- *	| P ( )
- *	| P ( EL )
+ *	| P ( ELo )
  *	| P [ e ]
  *	| L . i
  *	| P - i
@@ -22,14 +24,51 @@
  *	| ( L )
  *
  *
- * The grammar contains left recursion. We eliminate it as follows:
- * P1	: i | c | s | ( e )
- * P	: P1 RP | L . i
- * RP	: ( ) RP | ( EL ) RP | [ e ] RP | - i RP | ""
+ * The grammar contains left recursion.
+ *
+ * 1) We eliminate immediate left recursion in L:
  *
  * lvalue
- * L	: i RL | P [ e ] | P - i | * e | ( L )
+ * L	: i RL | P [ e ] RL | P - i RL | * e RL | ( L ) RL
  * RL	: . i RL | ""
+ *
+ * 2) Then, we replace the only production of P -> L . i RP wiht the current L
+ * production:
+ *
+ * P	: i
+ *	| c
+ *	| s
+ *	| ( e )
+ *	| i RL . i
+ *	| ( L ) RL . i
+ *	| * e RL . i
+ *	| P ( ELo )
+ *	| P [ e ]
+ *	| P [ e ] RL . i
+ *	| P - i RL . i
+ *	| P - i
+ *	;
+ *
+ * 3) We eliminate immediate left recursion in P:
+ * P	: i RP
+ *	| c RP
+ *	| s RP
+ *	| ( e ) RP
+ *	| i RL . i RP
+ *	| ( L ) RL . i RP
+ *	| * e RL . i RP
+ *	;
+ * RP	: ( ELo ) RP
+ *	| [ e ] RP
+ *	| [ e ] RL . i RP
+ *	| - i RL . i RP
+ *	| - i RP
+ *	| ""
+ *	;
+ 
+ *
+ * The procedure does not eliminate left recursion involving derivations of two
+ * or more steps.
  */
 
 #include <stdio.h>
@@ -39,6 +78,13 @@ void error(const char *s)
 {
 	fprintf(stderr, "Error: %s\n", s);
 	exit(1);
+}
+
+void print_node(const char *s, int offset)
+{
+	while (offset--)
+		putchar(' ');
+	puts(s);
 }
 
 void scan(int *tok)
@@ -54,6 +100,7 @@ void scan(int *tok)
 		case '.':
 		case 'i':
 		case 'c':
+		case 's':
 		case 'e':
 		case EOF:
 		case '\n':
@@ -111,29 +158,125 @@ void rw_stack(int old_sp)
         lookahead = buffer[sp];
 }
 
-/* EL -> e | e , EL */
-int EL()
+/* EL	: e
+ *	| e , EL */
+int ELo()
 {
 	if ('e' == lookahead) {
 		next();
 		if (',' == lookahead) {
-			if (EL())
+			next();
+			if (ELo()) {
+				print_node("ELo	-> e , ELo", sp);
 				return 1;
-			/* if EL fails, the stack must be restored autom */
+			}
+			pop();
+			/* fall through, because reasons */
+			/* buffer points to ',' */
+		}
+		print_node("ELo -> e", sp);
+		/* buffer may or may not point to ',', but 'e' is matched  */
+		return 1;
+	}
+	/* match epsilon */
+	return 1;
+}
+
+/*
+ * primary
+ */
+int RP();
+int dotiRP()
+{
+	if ('.' == lookahead) {
+		next();
+		if ('i' == lookahead) {
+			next();
+			if (RP()) {
+				print_node(" e", sp);
+				return 1;
+			}
+			pop();
 		}
 		pop();
 	}
 	return 0;
 }
 
+/* RP	: ( ELo ) RP
+ *	| [ e ] RP
+ *	| [ e ] RL . i RP
+ *	| - i RL . i RP
+ *	| - i RP
+ *	| ""
+ *	;
+ */
+ 
+int RL();	/* forward declaration */
+int L();	/* forward declaration */
+
+int RP()
+{
+	int old_sp = -1;
+	if ('(' == lookahead) {
+		next();
+		/* | ( ELo ) RP */
+		old_sp = sp;
+		if (ELo()) {
+			if (RP())
+				return 1;
+		}
+		/* despite succ EL, need to rw_stack back if RP fails */
+		rw_stack(old_sp);
+	}
+	/* | [ e ] RP */
+	if ('[' == lookahead) {
+		next();
+		if ('e' == lookahead) {
+			next();
+			if (']' == lookahead) {
+				next();
+				if (RP())
+					return 1;
+				if (RL())
+					if (dotiRP())
+						return 1;
+				pop();
+			}
+			pop();
+		}
+		pop();
+	}
+	/* | - i RP  */
+	if ('-' == lookahead) {
+		next();
+		if ('i' == lookahead) {
+			int old_sp = sp;
+			next();
+			if (RL())
+				if (dotiRP())
+					return 1;
+			rw_stack(old_sp);
+			if (RP())
+				return 1;
+		}
+		pop();
+	}
+	/* | "" */
+	return 1;
+}
+
 /*
- * primary
- * P1	: i | c | s | ( e )
- * P	: P1 RP | L . i
- * RP	: ( ) RP | ( EL ) RP | [ e ] RP | - i RP | ""
+ * P	: i RP
+ *	| c RP
+ *	| s RP
+ *	| ( e ) RP
+ *	| i RL . i RP
+ *	| ( L ) RL . i RP
+ *	| * e RL . i RP
+ *	;
  */
 
- /* P1	: i | c | s | ( e ) */
 int P1()
 {
 	switch (lookahead) {
@@ -154,91 +297,71 @@ int P1()
 			}
 			pop();
 			break;
-		default: return 0;
+		default: break;
 	}
 	return 0;
 }
 
- /* RP	: ( ) RP | ( EL ) RP | [ e ] RP | - i RP | "" */
-int RP()
+int RLdotiRP()
 {
-	int old_sp = -1;
-	/* : ( ) RP */
-	if ('(' == lookahead) {
-		next();
-		if (')' == lookahead) {
-			next();
-			if (RP())
-				return 1;
-			pop();
-		}
-		/* | ( EL ) RP */
-		old_sp = sp;
-		if (EL()) {
-			if (RP())
-				return 1;
-		}
-		rw_stack(old_sp); /* despite succ EL, need to rw_stack back if RP fails*/
-	}
-	/* | [ e ] RP */
-	if ('[' == lookahead) {
-		next();
-		if ('e' == lookahead) {
-			next();
-			if (']' == lookahead) {
-				next();
-				if (RP())
-					return 1;
-				pop();
-			}
-			pop();
-		}
-		pop();
-	}
-	/* | - i RP  */
-	if ('-' == lookahead) {
-		next();
-		if ('i' == lookahead) {
-			next();
-			if (RP())
-				return 1;
-			pop();
-		}
-		pop();
-	}
-	/* | "" */
-	return 1;
-}
-
-/* P	: P1 RP | L . i */
-int RL(); /* forward declaration */
-int P()
-{
-	int old_sp;
-	old_sp = sp;
-	printf("P: sp=%d\n", sp);
-	if (P1()) {
-		if (RP())
+	int old_sp = sp;
+	if (RL())
+		if (dotiRP())
 			return 1;
-	}
-	rw_stack(old_sp);
-        if (RL()) {
-		if ('.' == lookahead) {
-			next();
-			if ('i' == lookahead) {
-				next();
-				return 1;
-			}
-			pop();
-		}
-	}
 	rw_stack(old_sp);
 	return 0;
 }
 
 /*
+ * P	: P1 RP
+ *	| i RL . i RP
+ *	| ( L ) RL . i RP
+ *	| * e RL . i RP
+ *	;
+ */
+
+int P()
+{
+	int old_sp;
+	old_sp = sp;
+	printf("P -> P1 RP : sp=%d\n", sp);
+	if (P1()) {
+		if (RP())
+			return 1;
+	}
+	rw_stack(old_sp);
+	printf("P -> RL . i RP : sp=%d\n", sp);
+	if (RLdotiRP())
+		return 1;
+	rw_stack(old_sp);
+	printf("P -> ( L ) RP : sp=%d\n", sp);
+	if ('(' == lookahead)
+	{
+		next();
+		if (L())
+			if (')' == lookahead)
+				if (RLdotiRP())
+					return 1;
+	}
+	rw_stack(old_sp);
+	printf("P -> * e RL . i RP : sp=%d\n", sp);
+	if ('*' == lookahead) {
+		old_sp = sp;
+		next();
+		if ('e' == lookahead) {
+			next();
+			if (RLdotiRP())
+				return 1;
+		}
+		rw_stack(old_sp);
+	}
+
+	return 0;
+}
+
+/*
  * lvalue
- * L	: i RL | P [ e ] | P - i | * e | ( L )
+ * L	: i RL | P [ e ] RL | P - i RL | * e RL | ( L ) RL
  * RL	: . i RL | ""
  */
 
@@ -263,59 +386,76 @@ int RL()
 int L()
 {
 	int old_sp;
-	printf("L: sp=%d\n", sp);
+	old_sp = sp;
+	/* L -> i RL */
+	printf("L -> i RL : sp=%d\n", sp);
 	if ('i' == lookahead) {
 		next();
-		if (RL())
+		if (RL()) {
+			print_node("L -> i RL", sp);
 			return 1;
+		}
 		pop();
         }
         /* L -> P [ e ] */
-	old_sp = sp;
+	rw_stack(old_sp);
 	if (P()) {
+		printf("L -> P [ e ] : sp=%d\n", sp);
 		if ('[' == lookahead) {
 			next();
 			if ('e' == lookahead) {
 				next();
 				if (']' == lookahead) {
 					next();
-					return 1;
+					if (RL()) {
+						print_node("L -> P [ e ]", sp);
+						return 1;
+					}
 				}
 				pop();
 			}
 			pop();
 		}
-		/* L -> P - i */
+		/* L -> P - i RL */
+		printf("L -> P - i RL : sp=%d\n", sp);
 		if ('-' == lookahead) {
 			next();
 			if ('i' == lookahead) {
 				next();
-				return 1;
+				if (RL())
+					return 1;
 			}
 			pop();
 		}
 	}
 	rw_stack(old_sp); /* if P() but rest failed */
-	/* * e */
+	/* * e RL */
+	printf("L -> * e RL : sp=%d\n", sp);
 	if ('*' == lookahead) {
 		next();
 		if ('e' == lookahead) {
 			next();
-			return 1;
+			if (RL())
+				return 1;
 		}
 		pop();
 	}
-	/* ( L ) */
+	/* ( L ) RL */
+	printf("L -> ( L ) RL : sp=%d\n", sp);
 	if ('(' == lookahead) {
 		next();
 		old_sp = sp;
 		if (L()) {
 			if (')' == lookahead) {
 				next();
-				return 1;
+				if (RL()) {
+					print_node("L -> ( L ) RL", sp);
+					return 1;
+				}
+				pop();
 			}
 		}
-		rw_stack(old_sp); /* unnecessary if last production */
+		rw_stack(old_sp);
 	}
 	return 0;
 }

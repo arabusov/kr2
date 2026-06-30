@@ -33,7 +33,7 @@ grammar here:
 	\0constant
 	\0string
 	\0\fC(\fIexpression \fC)
-	\0\fIprimary \fC(\fIexpression-list\dopt\u \fC)
+	\0\fIprimary \fC(\fIexpression-list\s-2\dopt\u\s+2 \fC)
 	\0\fIprimary \fC[\fIexpression \fC]\fI
 	\0\fIlvalue \fC.\fIidentifier
 	\0primary \fC->\fIidentifier\fR
@@ -54,7 +54,7 @@ grammar will be in the following manner:
 .2C
 .DS
 \fIP \[->]		i  | c | s | \fC(\fIe \fC)\fI
-	|	P \fC(\fIEL\dopt\u \fC)\fI
+	|	P \fC(\fIEL\s-2\dopt\u\s+2 \fC)\fI
 	|	P \fC[\fIe \fC]\fI
 	|	L \fC. \fIi
 	|	P \fC-> \fIi
@@ -84,12 +84,13 @@ where \fIA\fR is a non-terminal with the productions
 \fIA \[->] A\[*a] | A\[*b]\fR.
 .DE
 .PP
-We eliminate left recursion using Algorithm 4.1 from [2], Sec.  4.3, p. 177\u*\d.
+We eliminate left recursion using the algorithm 4.1 from [2], Sec.  4.3, p.
+177\s-2\u*\d\s+2.
 .FS *
 It seems there is a couple of typos on the p. 177. The line 8 should read
 \*[Q]Grammar \fIG\fR with no cycles or \[*e] production,\*[U] and the line 16
-should read \*[Q]the production \fIA\di\u\[->]\[*d]\d1\u\[*g]  |
-\[*d]\d2\u\[*g]  | ...  | \[*d]\dk\u\[*g].\*[U]
+should read \*[Q]the production \fIA\s-2\di\u\s+2 \[->]\[*d]\s-2\d1\u\s+2\[*g]  |
+\[*d]\s-2\d2\u\s-2\[*g]  | ...  | \[*d]\s-2\dk\u\s+2\[*g].\*[U]
 .FE
 First, we order the non-terminals with \fIL\fR being the first and \fIP\fR
 being the second. The \fIL\fR production need to undergo the elimination of
@@ -106,7 +107,7 @@ Then, we need to eliminate the left recursion for \fIP\fR.  First, we replace
 the only production of \fIP\fR containing \fIL\fR by expanding \fIL\fR:
 .DS
 \fIP	\[->]	i  | c | s | \fC(\fIe \fC)\fI
-	|	P \fC(\fIEL\dopt\u \fC)\fI
+	|	P \fC(\fIEL\s-2\dopt\s+2\u \fC)\fI
 	|	P \fC[\fIe \fC]\fI
 	|	i RL \fC\.\fI i | \fC*\fI e RL \fC\. \fIi
 	|	P \fC[\fIe \fC]\fI RL \fC\. \fIi
@@ -122,16 +123,16 @@ and their productions. We use the \fIRP\fR symbol for the \*[Q]rest\*[U] of the
 extra non-terminal \fIPt\fR just to shorten the notation as its productions are
 terminals only.
 .DS
-\fIRP	\[->]	P \fC(\fIEL\dopt\u \fC)\fI
-	|	\fC[\fIe \fC]\fI RP
-	|	\fC[\fIe \fC]\fI RL \fC\. \fIi RP
+\fIRP	\[->]	\fC(\fI EL\s-2\dopt\s+2\u \fC) \fIRP
+	|	\fC[\fI e \fC]\fI RP
+	|	\fC[\fI e \fC]\fI RL \fC\. \fIi RP
 	|	\fC-> \fIi RL \fC. \fIi RP
 	|	\fC-> \fIi RP
 	|	\[*e]
 .DE
 .DS
 \fIP	\[->]	i  RP | c RP | s RP | \fC(\fIe \fC)\fI RP
-	|	P \fC(\fIEL\dopt\u \fC)\fI RP
+	|	P \fC(\fIEL\s-2\dopt\s+2\u \fC)\fI RP
 	|	P \fC[\fIe \fC]\fI RP
 	|	i RL \fC\.\fI i RP | \fC*\fI e RL \fC\. \fIi RP
 	|	P \fC[\fIe \fC]\fI RL \fC\. \fIi RP
