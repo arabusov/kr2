@@ -152,6 +152,15 @@ void pop()
 	lookahead = buffer[sp];
 }
 
+void reset_input()
+{
+	if (sp < 0)
+		error("Input is empty");
+	sp = 0;
+	bp = 0;
+	buffer[sp] = lookahead;
+}
+
 void rw_stack(int old_sp)
 {
         sp = old_sp;
@@ -387,7 +396,7 @@ int RL()
 }
 
  /* L	: i RL | P [ e ] | P - i | * e | ( L ) */
-int L()
+int L1()
 {
 	int old_sp;
 	old_sp = sp;
@@ -400,8 +409,15 @@ int L()
 		}
 		pop();
         }
-        /* L -> P [ e ] */
 	rw_stack(old_sp);
+	return 0;
+}
+
+int L2()
+{
+	int old_sp;
+	old_sp = sp;
+        /* L -> P [ e ] */
 	if (P()) {
 		if ('[' == lookahead) {
 			next();
@@ -432,6 +448,13 @@ int L()
 		}
 	}
 	rw_stack(old_sp); /* if P() but rest failed */
+	return 0;
+}
+
+int L3()
+{
+	int old_sp;
+	old_sp = sp;
 	/* * e RL */
 	if ('*' == lookahead) {
 		next();
@@ -444,6 +467,14 @@ int L()
 		}
 		pop();
 	}
+	rw_stack(old_sp);
+	return 0;
+}
+
+int L4()
+{
+	int old_sp;
+	old_sp = sp;
 	/* ( L ) RL */
 	if ('(' == lookahead) {
 		next();
@@ -473,18 +504,57 @@ void match(int tok)
 	error("could not match token");
 }
 
+void match_lvalue()
+{
+	if (L1()) {
+		if ('\n' == lookahead) {
+			next();
+			return;
+		}
+	}
+	if (L2()) {
+		if ('\n' == lookahead) {
+			next();
+			return;
+		}
+	}
+	if (L3()) {
+		if ('\n' == lookahead) {
+			next();
+			return;
+		}
+	}
+	if (L4()) {
+		if ('\n' == lookahead) {
+			next();
+			return;
+		}
+	}
+	printf("token: %d\n", lookahead);
+        print_buffer();
+	error("could not match token");
+}
+
+int L()
+{
+	if (L1())
+		return 1;
+	if (L2())
+		return 1;
+	if (L3())
+		return 1;
+	if (L4())
+		return 1;
+	return 0;
+}
+
 void parse()
 {
 	next(); /* initialize lookahead and buffer */
 
 	while (EOF != lookahead) {
-		if (L()) {
-			match('\n');
-			printf("Matched\n");
-			continue;
-		} else {
-			error("Parse error");
-		}
+		match_lvalue();
+		reset_input();
 	}
 }
 
