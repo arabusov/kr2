@@ -136,7 +136,7 @@ void next()
 	if (sp >= (BLEN-1))
 		error("Input buffer overflown");
 	if (sp < bp) {
-		lookahead = buffer[sp++];
+		lookahead = buffer[++sp];
 		return;
 	}
 	scan(&buffer[++sp]);
@@ -324,38 +324,41 @@ int P()
 {
 	int old_sp;
 	old_sp = sp;
-	printf("P -> P1 RP : sp=%d\n", sp);
 	if (P1()) {
-		if (RP())
+		if (RP()) {
+			print_node("P -> P1 RP", sp);
 			return 1;
+		}
 	}
 	rw_stack(old_sp);
-	printf("P -> RL . i RP : sp=%d\n", sp);
-	if (RLdotiRP())
+	if (RLdotiRP()) {
+		printf("P -> RL . i RP", sp);
 		return 1;
+	}
 	rw_stack(old_sp);
-	printf("P -> ( L ) RP : sp=%d\n", sp);
 	if ('(' == lookahead)
 	{
 		next();
 		if (L())
 			if (')' == lookahead)
-				if (RLdotiRP())
+				if (RLdotiRP()) {
+					print_node("P -> ( L ) RP", sp);
 					return 1;
+				}
 	}
 	rw_stack(old_sp);
-	printf("P -> * e RL . i RP : sp=%d\n", sp);
 	if ('*' == lookahead) {
 		old_sp = sp;
 		next();
 		if ('e' == lookahead) {
 			next();
-			if (RLdotiRP())
+			if (RLdotiRP()) {
+				print_node("P -> * e RL . RP", sp);
 				return 1;
+			}
 		}
 		rw_stack(old_sp);
 	}
-
 	return 0;
 }
 
@@ -373,6 +376,7 @@ int RL()
 		if (lookahead == 'i') {
 			next();
 			if (RL()) {
+				print_node("RL-> . i RL", sp);
 				return 1;
 			}
 			pop();
@@ -388,7 +392,6 @@ int L()
 	int old_sp;
 	old_sp = sp;
 	/* L -> i RL */
-	printf("L -> i RL : sp=%d\n", sp);
 	if ('i' == lookahead) {
 		next();
 		if (RL()) {
@@ -400,7 +403,6 @@ int L()
         /* L -> P [ e ] */
 	rw_stack(old_sp);
 	if (P()) {
-		printf("L -> P [ e ] : sp=%d\n", sp);
 		if ('[' == lookahead) {
 			next();
 			if ('e' == lookahead) {
@@ -417,31 +419,32 @@ int L()
 			pop();
 		}
 		/* L -> P - i RL */
-		printf("L -> P - i RL : sp=%d\n", sp);
 		if ('-' == lookahead) {
 			next();
 			if ('i' == lookahead) {
 				next();
-				if (RL())
+				if (RL()) {
+					printf("L -> P - i RL", sp);
 					return 1;
+				}
 			}
 			pop();
 		}
 	}
 	rw_stack(old_sp); /* if P() but rest failed */
 	/* * e RL */
-	printf("L -> * e RL : sp=%d\n", sp);
 	if ('*' == lookahead) {
 		next();
 		if ('e' == lookahead) {
 			next();
-			if (RL())
+			if (RL()) {
+				printf("L -> * e RL\n", sp);
 				return 1;
+			}
 		}
 		pop();
 	}
 	/* ( L ) RL */
-	printf("L -> ( L ) RL : sp=%d\n", sp);
 	if ('(' == lookahead) {
 		next();
 		old_sp = sp;
